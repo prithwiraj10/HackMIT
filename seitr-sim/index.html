@@ -356,6 +356,7 @@ document.getElementById("fileInput").addEventListener("change", async e => {
     setRunning(false); initSim(raw);
     document.getElementById("status").textContent = `Loaded ${raw.buildings.length} buildings from ${f.name}`;
   } catch (err) {
+    if (gen !== importGen) return;
     document.getElementById("status").textContent = `Could not parse file: ${err.message}`;
   }
 });
