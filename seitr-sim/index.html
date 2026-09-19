@@ -173,6 +173,7 @@ const CONTACT_RATES = {
   "library": 0.6, "lab": 0.9, "gym": 1.1, "auditorium": 1.0, "office": 0.5, "default": 0.9,
 };
 const contactRate = t => CONTACT_RATES[(t || "").toLowerCase()] ?? CONTACT_RATES.default;
+const MAX_BUILDINGS = 300;
 const TREATED_CONTACT = 0.15;           // relative infectiousness of isolated individuals
 const COMPARTMENTS = ["S", "E", "I", "T", "R"];
 const COLORS = { S: "#6b8cae", E: "#3fa7a0", I: "#c5d65a", T: "#98b092", R: "#1f6b4a" };
@@ -189,6 +190,7 @@ function normaliseData(raw) {
   }));
   const n = buildings.length;
   if (!n) throw new Error("no buildings found");
+  if (n > MAX_BUILDINGS) throw new Error(`too many buildings (${n} > ${MAX_BUILDINGS})`);
   let D;
   if (Array.isArray(raw.distances) && Array.isArray(raw.distances[0])) {
     D = raw.distances.map(r => r.map(Number));
@@ -205,13 +207,16 @@ function normaliseData(raw) {
     const max = d3.max(D.flat().filter(Number.isFinite)) || 1;
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (!Number.isFinite(D[i][j])) D[i][j] = i === j ? 0 : max * 1.5;
   } else throw new Error("missing distances");
-  // Populations: use provided values, else distribute evenly weighted by type contact rate.
+  // Populations: use provided values; fill gaps from the remaining default pool (or, if the
+  // supplied ones already exceed it, from their mean), weighted by type contact rate.
   const total = 3000;
   const missing = buildings.filter(b => b.population == null);
   if (missing.length) {
-    const given = d3.sum(buildings, b => b.population ?? 0);
+    const supplied = buildings.filter(b => b.population != null);
+    const given = d3.sum(supplied, b => b.population);
+    const pool = given < total ? total - given : d3.mean(supplied, b => b.population) * missing.length;
     const wsum = d3.sum(missing, b => contactRate(b.type));
-    for (const b of missing) b.population = Math.round(Math.max(0, total - given) * contactRate(b.type) / wsum);
+    for (const b of missing) b.population = Math.max(1, Math.round(pool * contactRate(b.type) / wsum));
   }
   return { buildings, distances: D };
 }
@@ -340,10 +345,13 @@ document.getElementById("playBtn").onclick = () => setRunning(!running);
 document.getElementById("stepBtn").onclick = () => { setRunning(false); step(); render(500); };
 document.getElementById("resetBtn").onclick = () => { setRunning(false); initSim(data ?? SAMPLE_DATA); };
 
+let importGen = 0;
 document.getElementById("fileInput").addEventListener("change", async e => {
   const f = e.target.files[0]; if (!f) return;
+  const gen = ++importGen;
   try {
     const text = await f.text();
+    if (gen !== importGen) return;
     const raw = f.name.toLowerCase().endsWith(".csv") ? parseCSV(text) : JSON.parse(text);
     setRunning(false); initSim(raw);
     document.getElementById("status").textContent = `Loaded ${raw.buildings.length} buildings from ${f.name}`;
