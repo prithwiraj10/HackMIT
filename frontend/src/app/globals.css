@@ -934,6 +934,12 @@ input[type="range"] {
 .detail-type span {
   margin: 0 5px;
 }
+.detail-about {
+  margin-top: 9px;
+  color: #6f7b63;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
 .exposure-box {
   border: 1px solid #e9edde;
   border-radius: 7px;

@@ -1,4 +1,4 @@
-import source from "@/data/sample-buildings.json";
+import source from "@/data/mit-campus.json";
 
 export type Compartments = {
   S: number;
@@ -20,6 +20,10 @@ export type BuildingState = Compartments & {
   id: string;
   name: string;
   type: string;
+  code: string;
+  zone: string;
+  about: string;
+  coordinates: [number, number];
   N: number;
   contact: number;
   newExposures: number;
@@ -67,16 +71,28 @@ export const STATE_COLORS = {
 const CONTACT_RATES: Record<string, number> = {
   dorm: 1.4,
   "dining hall": 1.6,
+  dining: 1.6,
   classroom: 0.8,
   library: 0.6,
   lab: 0.9,
   gym: 1.1,
   auditorium: 1,
+  academic: 0.8,
+  student_life: 1.3,
+  events: 1,
+  health: 0.7,
+  outdoor: 0.4,
+  off_campus: 1.2,
 };
-export const BUILDINGS = source.buildings.map((b, i) => ({
-  id: `building-${i}`,
+export const CAMPUS_SOURCE = source.source;
+export const BUILDINGS = source.buildings.map((b) => ({
+  id: b.id,
   name: b.name,
   type: b.type,
+  code: b.mitNumber,
+  zone: b.zone,
+  about: b.about,
+  coordinates: [b.lon, b.lat] as [number, number],
   N: b.population,
   contact: CONTACT_RATES[b.type] ?? 0.9,
 }));
@@ -200,9 +216,10 @@ export function describeBuilding(b: BuildingState) {
   const total = b.internalPressure + b.externalPressure;
   const internalShare =
     total > 0 ? Math.round((b.internalPressure / total) * 100) : 0;
+  const type = b.type.replace(/_/g, " ");
   return total === 0
     ? "There is no modeled exposure pressure at this location on this day."
-    : `${internalShare}% of this location’s exposure pressure comes from within its own cohort. The other ${100 - internalShare}% comes from the model’s distance-weighted connections. Its ${b.type} contact multiplier is ${b.contact.toFixed(1)}×.`;
+    : `${internalShare}% of this location’s exposure pressure comes from within its own cohort. The other ${100 - internalShare}% comes from the model’s estimated walking-distance connections. Its ${type} contact multiplier is ${b.contact.toFixed(1)}×.`;
 }
 export const formatCount = (n: number) => Math.round(n).toLocaleString("en-US");
 export const formatRate = (n: number) => `${(n * 100).toFixed(1)}%`;

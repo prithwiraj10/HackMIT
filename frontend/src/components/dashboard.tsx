@@ -57,7 +57,7 @@ export function Dashboard() {
   const [day, setDay] = useState(7);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [selected, setSelected] = useState("building-5");
+  const [selected, setSelected] = useState(BUILDINGS[0].id);
   const [query, setQuery] = useState("");
   const [comparison, setComparison] = useState<Scenario | null>(null);
   const [active, setActive] = useState("baseline");
@@ -955,8 +955,9 @@ function Method() {
         </h2>
         <p>
           This frontend runs the SEITR equations already in your team’s
-          repository. It maps 14 fictional building cohorts onto public MIT
-          geography and keeps each day available for replay.
+          repository. It maps {BUILDINGS.length} MIT building cohorts with
+          sample student sizes onto public MIT geography and keeps each day
+          available for replay.
         </p>
       </section>
       <div className="method-grid">
@@ -969,8 +970,8 @@ function Method() {
           },
           {
             n: "02",
-            title: "Synthetic building cohorts",
-            content: `The existing sample defines ${formatCount(POPULATION)} modeled people across ${BUILDINGS.length} locations. These are fictional cohorts, not enrollment, visits, or live occupancy.`,
+            title: "Sample building cohorts",
+            content: `The MIT dataset defines ${formatCount(POPULATION)} modeled people across ${BUILDINGS.length} locations: dorm counts are approximate bed counts and other buildings use a typical concurrent weekday occupancy. They are estimates, not enrollment, visits, or live occupancy.`,
           },
           {
             n: "03",
@@ -1071,8 +1072,8 @@ function Sources({ onClose }: { onClose: () => void }) {
             Icon: Map,
           },
           {
-            title: "Synthetic building cohorts",
-            detail: "14 locations · existing sample-buildings.json",
+            title: "MIT building cohorts",
+            detail: `${BUILDINGS.length} locations · seitr-sim/data · mit-campus.json`,
             Icon: FileJson,
           },
           {

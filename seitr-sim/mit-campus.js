@@ -17,7 +17,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence with house dining hall (Flowers Dining Room).",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.35745,
+   "lon": -71.0948
   },
   {
    "id": "mccormick",
@@ -33,7 +35,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence with house dining hall.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.35725,
+   "lon": -71.098
   },
   {
    "id": "baker",
@@ -49,7 +53,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence with house dining hall.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.35735,
+   "lon": -71.09975
   },
   {
    "id": "burton_conner",
@@ -64,7 +70,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.3576,
+   "lon": -71.1017
   },
   {
    "id": "macgregor",
@@ -79,7 +87,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.358,
+   "lon": -71.1038
   },
   {
    "id": "new_house",
@@ -94,7 +104,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.3585,
+   "lon": -71.1052
   },
   {
    "id": "next_house",
@@ -110,7 +122,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence, far west end of campus; house dining.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.3592,
+   "lon": -71.1068
   },
   {
    "id": "simmons",
@@ -126,7 +140,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence on Vassar St; house dining.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.362,
+   "lon": -71.102
   },
   {
    "id": "east_campus",
@@ -141,7 +157,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Undergraduate residence near Ames St, closest dorm to Kendall Sq.",
-   "populationBasis": "residents (approximate bed count)"
+   "populationBasis": "residents (approximate bed count)",
+   "lat": 42.35905,
+   "lon": -71.0881
   },
   {
    "id": "bldg7",
@@ -155,7 +173,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Main entrance at 77 Mass Ave; west end of the Infinite Corridor; classrooms and offices.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35933,
+   "lon": -71.0935
   },
   {
    "id": "bldg3",
@@ -169,7 +189,9 @@ window.MIT_CAMPUS = {
     "lab"
    ],
    "about": "Main Group link between Bldgs 7 and 10; classrooms, labs, offices.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35935,
+   "lon": -71.09268
   },
   {
    "id": "bldg10",
@@ -184,7 +206,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Great Dome and Lobby 10; Barker Engineering Library (10-500); Bush Room (10-105).",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3599,
+   "lon": -71.09215
   },
   {
    "id": "bldg2",
@@ -197,7 +221,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "Mathematics; classrooms such as 2-190.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35915,
+   "lon": -71.09148
   },
   {
    "id": "bldg4",
@@ -211,7 +237,9 @@ window.MIT_CAMPUS = {
     "lab"
    ],
    "about": "Main Group classrooms (e.g. 4-370 lecture room) and labs.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35962,
+   "lon": -71.09135
   },
   {
    "id": "bldg6",
@@ -225,7 +253,9 @@ window.MIT_CAMPUS = {
     "lab"
    ],
    "about": "Chemistry; lecture hall 6-120.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3596,
+   "lon": -71.09052
   },
   {
    "id": "hayden",
@@ -239,7 +269,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "Hayden Library and Humanities; Lewis Music Library.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35935,
+   "lon": -71.09
   },
   {
    "id": "killian",
@@ -253,7 +285,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Great lawn south of Building 10 facing the river; outdoor event space.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35895,
+   "lon": -71.0919
   },
   {
    "id": "bldg26",
@@ -266,7 +300,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "Large lecture hall 26-100 and labs.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3612,
+   "lon": -71.0933
   },
   {
    "id": "bldg45",
@@ -280,7 +316,9 @@ window.MIT_CAMPUS = {
     "lab"
    ],
    "about": "Schwarzman College of Computing; labs and classrooms.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3616,
+   "lon": -71.0922
   },
   {
    "id": "bldg46",
@@ -294,7 +332,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "Brain and Cognitive Sciences complex.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3618,
+   "lon": -71.091
   },
   {
    "id": "stata",
@@ -309,7 +349,9 @@ window.MIT_CAMPUS = {
     "dining"
    ],
    "about": "CSAIL and LIDS (Dreyfoos tower); large auditorium 32-123; cafes.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.362,
+   "lon": -71.0895
   },
   {
    "id": "media_lab",
@@ -323,7 +365,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "Media Lab; Bartos Theatre (E15-070).",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.36055,
+   "lon": -71.0872
   },
   {
    "id": "sloan",
@@ -336,7 +380,9 @@ window.MIT_CAMPUS = {
     "lecture"
    ],
    "about": "MIT Sloan School of Management classrooms.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.361,
+   "lon": -71.0839
   },
   {
    "id": "mit_medical",
@@ -349,7 +395,9 @@ window.MIT_CAMPUS = {
     "health_center"
    ],
    "about": "Campus health center: urgent care, primary care, pharmacy.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3628,
+   "lon": -71.0856
   },
   {
    "id": "student_center",
@@ -364,7 +412,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Student org offices, food court, Tech Coop bookstore, event rooms; hub for student events.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35905,
+   "lon": -71.09465
   },
   {
    "id": "kresge",
@@ -377,7 +427,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Large auditorium for convocation-scale events.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.35835,
+   "lon": -71.09525
   },
   {
    "id": "chapel",
@@ -390,7 +442,9 @@ window.MIT_CAMPUS = {
     "club_room"
    ],
    "about": "Interfaith chapel; small gatherings and concerts.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3583,
+   "lon": -71.09465
   },
   {
    "id": "kresge_oval",
@@ -404,7 +458,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Lawn between Kresge, the Chapel and the Student Center.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3587,
+   "lon": -71.09495
   },
   {
    "id": "zesiger",
@@ -417,7 +473,9 @@ window.MIT_CAMPUS = {
     "gym"
    ],
    "about": "Gym, pool and courts.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.36015,
+   "lon": -71.09555
   },
   {
    "id": "johnson",
@@ -431,7 +489,9 @@ window.MIT_CAMPUS = {
     "orientation"
    ],
    "about": "Rockwell Cage, indoor track and ice rink; large indoor event space.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.36085,
+   "lon": -71.097
   },
   {
    "id": "central_sq",
@@ -445,7 +505,9 @@ window.MIT_CAMPUS = {
     "party"
    ],
    "about": "Restaurants and bars west of campus.",
-   "populationBasis": "typical concurrent students on a weekday"
+   "populationBasis": "typical concurrent students on a weekday",
+   "lat": 42.3654,
+   "lon": -71.1037
   },
   {
    "id": "back_bay",
@@ -459,7 +521,9 @@ window.MIT_CAMPUS = {
     "dorm_room"
    ],
    "about": "Cluster of MIT fraternity, sorority and independent living groups across the Harvard Bridge.",
-   "populationBasis": "residents (FSILG chapter houses combined)"
+   "populationBasis": "residents (FSILG chapter houses combined)",
+   "lat": 42.351,
+   "lon": -71.087
   }
  ],
  "distances": [

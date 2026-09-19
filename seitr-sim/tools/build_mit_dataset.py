@@ -4,8 +4,9 @@
 Joins the campus files in seitr-sim/data (buildings, estimated walking distance
 matrix, sample student sizes) and writes:
 
-  seitr-sim/mit-campus.js   window.MIT_CAMPUS, the dataset the page loads by default
-  seitr-sim/mit-campus.csv  the same data in the page's CSV import format
+  seitr-sim/mit-campus.js           window.MIT_CAMPUS, the dataset the page loads by default
+  seitr-sim/mit-campus.csv          the same data in the page's CSV import format
+  frontend/src/data/mit-campus.json the same data for the Next.js frontend
 
 Run:  python3 seitr-sim/tools/build_mit_dataset.py
 """
@@ -16,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
+FRONTEND_DATA = ROOT.parent / "frontend" / "src" / "data"
 
 
 def read_csv(path):
@@ -47,6 +49,8 @@ def main():
             "hosts": [h for h in row["hosts"].split(";") if h],
             "about": row["what_it_does"],
             "populationBasis": sizes[bid]["basis"],
+            "lat": float(row["lat"]),
+            "lon": float(row["lon"]),
         })
 
     distances = [[round(float(walk_m[a][b])) for b in ids] for a in ids]
@@ -67,6 +71,11 @@ def main():
         encoding="utf-8",
     )
 
+    FRONTEND_DATA.mkdir(parents=True, exist_ok=True)
+    (FRONTEND_DATA / "mit-campus.json").write_text(
+        json.dumps(dataset, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
     names = [b["name"] for b in buildings]
     with (ROOT / "mit-campus.csv").open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
@@ -74,7 +83,8 @@ def main():
         for i, b in enumerate(buildings):
             w.writerow([b["name"], b["type"], b["population"]] + distances[i])
 
-    print(f"wrote {js.name} and mit-campus.csv: {len(buildings)} buildings, "
+    print(f"wrote {js.name}, mit-campus.csv and frontend/src/data/mit-campus.json: "
+          f"{len(buildings)} buildings, "
           f"{sum(b['population'] for b in buildings)} students")
 
 

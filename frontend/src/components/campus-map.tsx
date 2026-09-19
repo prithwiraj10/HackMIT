@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import { Minus, Plus, Scan, Navigation } from "lucide-react";
 import mapData from "@/data/campus-map.json";
-import { risk, type BuildingState } from "@/lib/simulation";
+import { BUILDINGS, risk, type BuildingState } from "@/lib/simulation";
 
 // Keep SVG attributes stable across the server and browser math engines.
 const pixel = (value: number) => Math.round(value * 1000) / 1000;
@@ -48,7 +48,7 @@ export function CampusMap({
         ],
         {
           type: "MultiPoint",
-          coordinates: mapData.locations.map((b) => b.coordinates),
+          coordinates: BUILDINGS.map((b) => b.coordinates),
         },
       ),
     [size],
@@ -126,9 +126,8 @@ export function CampusMap({
           <path d={layers.street} className="map-street" />
           <path d={layers.path} className="map-footpath" />
           <path d={layers.building} className="map-buildings" />
-          {mapData.locations.map((location) => {
-            const b = buildings.find((b) => b.id === location.id)!;
-            const p = projection(location.coordinates as [number, number])!;
+          {buildings.map((b) => {
+            const p = projection(b.coordinates)!;
             return (
               <circle
                 key={b.id}
@@ -142,9 +141,8 @@ export function CampusMap({
           })}
         </g>
       </svg>
-      {mapData.locations.map((location) => {
-        const b = buildings.find((b) => b.id === location.id)!;
-        const p = projection(location.coordinates as [number, number])!;
+      {buildings.map((b) => {
+        const p = projection(b.coordinates)!;
         const r = risk(b.exposureRate);
         return (
           <button
@@ -163,7 +161,7 @@ export function CampusMap({
             onClick={() => onSelect(b.id)}
           >
             <span className="pin-dot" />
-            <span className="pin-code">{location.code}</span>
+            <span className="pin-code">{b.code}</span>
             <span className="pin-name">{b.name}</span>
           </button>
         );

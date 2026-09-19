@@ -1,5 +1,6 @@
 node_modules
 .next
 src/data/campus-map.json
+src/data/mit-campus.json
 package-lock.json
 next-env.d.ts

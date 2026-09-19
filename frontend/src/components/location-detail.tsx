@@ -9,7 +9,6 @@ import {
   risk,
   type BuildingState,
 } from "@/lib/simulation";
-import mapData from "@/data/campus-map.json";
 
 export function LocationDetail({
   building: b,
@@ -21,20 +20,20 @@ export function LocationDetail({
   onMethod: () => void;
 }) {
   const r = risk(b.exposureRate);
-  const code = mapData.locations.find((p) => p.id === b.id)?.code;
   return (
     <aside className="location-detail" aria-label="Selected building details">
       <div className="detail-top">
         <span className="eyebrow">LOCATION INSIGHT</span>
-        <span className="building-number">{code}</span>
+        <span className="building-number">{b.code}</span>
       </div>
       <div className="building-icon">
         <Building2 size={23} strokeWidth={1.5} />
       </div>
       <h2>{b.name}</h2>
       <p className="detail-type">
-        {b.type} <span>·</span> Day {day}
+        {b.type.replace(/_/g, " ")} <span>·</span> Day {day}
       </p>
+      {b.about && <p className="detail-about">{b.about}</p>}
       <div className="exposure-box">
         <div>
           <span>Modeled exposure</span>
