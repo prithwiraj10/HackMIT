@@ -58,7 +58,7 @@
   .file button { width: 100%; }
   .status { font-size: 11.5px; color: var(--accent); min-height: 16px; margin-top: 4px; }
   main { display: grid; grid-template-rows: 1fr 220px; min-height: 0; }
-  #network { position: relative; min-height: 0; }
+  #network { position: relative; min-height: 0; overflow: hidden; }
   #network svg { width: 100%; height: 100%; display: block; }
   #chart { border-top: 1px solid var(--line); background: var(--panel); }
   #chart svg { width: 100%; height: 100%; display: block; }
@@ -402,8 +402,11 @@ function buildNetwork() {
     .attr("transform", d => `translate(${d.x},${d.y})`)
     .call(d3.drag().on("drag", (ev, d) => { d.x = ev.x; d.y = ev.y; positionNodes(); }))
     .on("mousemove", (ev, d) => {
+      const box = document.getElementById("network").getBoundingClientRect();
       const [mx, my] = d3.pointer(ev, document.getElementById("network"));
-      tooltip.style("opacity", 1).style("left", (mx + 16) + "px").style("top", (my + 8) + "px").html(
+      const flip = mx > box.width - 200;
+      tooltip.style("opacity", 1).style("left", flip ? "auto" : (mx + 16) + "px").style("right", flip ? (box.width - mx + 16) + "px" : "auto")
+        .style("top", Math.min(my + 8, box.height - 130) + "px").html(
         `<b>${d.name}</b><div class="type">${d.type} · N=${d.N} · contact ×${d.contact}</div>` +
         COMPARTMENTS.map(c => `<span style="color:${COLORS[c]}">●</span> ${LABELS[c]} ${Math.round(d[c])}`).join("<br/>"));
     })
