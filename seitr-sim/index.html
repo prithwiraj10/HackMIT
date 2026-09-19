@@ -476,8 +476,9 @@ function declutterLabels() {
     .map(g => ({ g, N: d3.select(g).datum().N }))
     .sort((a, b) => b.N - a.N)
     .forEach(({ g }) => {
-      const label = d3.select(g).select(".node-label").node();
-      const box = label.getBoundingClientRect();
+      const boxes = [...g.querySelectorAll("text")].map(t => t.getBoundingClientRect());
+      const box = { left: d3.min(boxes, b => b.left), right: d3.max(boxes, b => b.right),
+                    top: d3.min(boxes, b => b.top), bottom: d3.max(boxes, b => b.bottom) };
       if (placed.some(p => overlaps(p, box))) d3.select(g).selectAll("text").style("display", "none");
       else placed.push(box);
     });
