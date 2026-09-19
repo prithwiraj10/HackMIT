@@ -176,6 +176,7 @@ const contactRate = t => CONTACT_RATES[(t || "").toLowerCase()] ?? CONTACT_RATES
 const TREATED_CONTACT = 0.15;           // relative infectiousness of isolated individuals
 const COMPARTMENTS = ["S", "E", "I", "T", "R"];
 const COLORS = { S: "#6b8cae", E: "#3fa7a0", I: "#c5d65a", T: "#98b092", R: "#1f6b4a" };
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const LABELS = { S: "Susceptible", E: "Exposed", I: "Infectious", T: "Treated", R: "Recovered" };
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -409,7 +410,7 @@ function buildNetwork() {
       const [mx, my] = d3.pointer(ev, document.getElementById("network"));
       const flip = mx > box.width - 200;
       tooltip.html(
-        `<b>${d.name}</b><div class="type">${d.type} · N=${d.N} · contact ×${d.contact}</div>` +
+        `<b>${esc(d.name)}</b><div class="type">${esc(d.type)} · N=${d.N} · contact ×${d.contact}</div>` +
         COMPARTMENTS.map(c => `<span style="color:${COLORS[c]}">●</span> ${LABELS[c]} ${Math.round(d[c])}`).join("<br/>"));
       const th = tooltip.node().offsetHeight;
       tooltip.style("opacity", 1).style("left", flip ? "auto" : (mx + 16) + "px").style("right", flip ? (box.width - mx + 16) + "px" : "auto")
