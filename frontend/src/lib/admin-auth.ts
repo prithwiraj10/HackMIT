@@ -22,10 +22,12 @@ export function verifyPassword(candidate: string) {
 
 export async function isAdmin() {
   const value = (await cookies()).get(ADMIN_COOKIE)?.value;
-  if (!value) return false;
-  const given = Buffer.from(value, "hex");
   const expected = token();
-  return given.length === expected.length && timingSafeEqual(given, expected);
+  // Buffer.from(..., "hex") stops at the first invalid pair, so a token with
+  // trailing junk would otherwise decode to the valid prefix.
+  if (!value || !new RegExp(`^[0-9a-f]{${expected.length * 2}}$`).test(value))
+    return false;
+  return timingSafeEqual(Buffer.from(value, "hex"), expected);
 }
 
 export const cookieOptions = {
