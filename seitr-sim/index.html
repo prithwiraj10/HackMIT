@@ -187,10 +187,13 @@ function normaliseData(raw) {
     population: +b.population > 0 ? +b.population : null,
   }));
   const n = buildings.length;
+  if (!n) throw new Error("no buildings found");
   let D;
   if (Array.isArray(raw.distances) && Array.isArray(raw.distances[0])) {
     D = raw.distances.map(r => r.map(Number));
-  } else {
+    if (D.length !== n || D.some(r => r.length !== n || r.some(v => !Number.isFinite(v))))
+      throw new Error(`distance matrix must be ${n}×${n} numeric`);
+  } else if (Array.isArray(raw.distances)) {
     const idx = new Map(buildings.map((b, i) => [b.name, i]));
     D = Array.from({ length: n }, () => Array(n).fill(NaN));
     for (const e of raw.distances) {
@@ -200,7 +203,7 @@ function normaliseData(raw) {
     }
     const max = d3.max(D.flat().filter(Number.isFinite)) || 1;
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (!Number.isFinite(D[i][j])) D[i][j] = i === j ? 0 : max * 1.5;
-  }
+  } else throw new Error("missing distances");
   // Populations: use provided values, else distribute evenly weighted by type contact rate.
   const total = 3000;
   const missing = buildings.filter(b => b.population == null);
@@ -405,10 +408,12 @@ function buildNetwork() {
       const box = document.getElementById("network").getBoundingClientRect();
       const [mx, my] = d3.pointer(ev, document.getElementById("network"));
       const flip = mx > box.width - 200;
-      tooltip.style("opacity", 1).style("left", flip ? "auto" : (mx + 16) + "px").style("right", flip ? (box.width - mx + 16) + "px" : "auto")
-        .style("top", Math.min(my + 8, box.height - 130) + "px").html(
+      tooltip.html(
         `<b>${d.name}</b><div class="type">${d.type} · N=${d.N} · contact ×${d.contact}</div>` +
         COMPARTMENTS.map(c => `<span style="color:${COLORS[c]}">●</span> ${LABELS[c]} ${Math.round(d[c])}`).join("<br/>"));
+      const th = tooltip.node().offsetHeight;
+      tooltip.style("opacity", 1).style("left", flip ? "auto" : (mx + 16) + "px").style("right", flip ? (box.width - mx + 16) + "px" : "auto")
+        .style("top", Math.max(0, Math.min(my + 8, box.height - th - 6)) + "px");
     })
     .on("mouseleave", () => tooltip.style("opacity", 0));
 
