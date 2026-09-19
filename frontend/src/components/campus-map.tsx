@@ -9,6 +9,41 @@ import { BUILDINGS, risk, type BuildingState } from "@/lib/simulation";
 // Keep SVG attributes stable across the server and browser math engines.
 const pixel = (value: number) => Math.round(value * 1000) / 1000;
 
+// MIT buildings sit close enough together that projected pins overlap, which
+// makes neighbouring pins unclickable. Push overlapping pins apart along the
+// pill's own proportions until every hit area is reachable.
+const PIN_WIDTH = 42;
+const PIN_HEIGHT = 22;
+
+function declutter(points: { id: string; x: number; y: number }[]) {
+  for (let pass = 0; pass < 60; pass++) {
+    let moved = false;
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const a = points[i];
+        const b = points[j];
+        let dx = (b.x - a.x) / PIN_WIDTH;
+        let dy = (b.y - a.y) / PIN_HEIGHT;
+        let gap = Math.hypot(dx, dy);
+        if (gap >= 1) continue;
+        if (gap === 0) {
+          dx = (i + 1) / 1000;
+          dy = (j + 1) / 1000;
+          gap = Math.hypot(dx, dy);
+        }
+        const shift = (1 - gap) / 2;
+        a.x -= ((dx / gap) * shift * PIN_WIDTH) / 2;
+        a.y -= ((dy / gap) * shift * PIN_HEIGHT) / 2;
+        b.x += ((dx / gap) * shift * PIN_WIDTH) / 2;
+        b.y += ((dy / gap) * shift * PIN_HEIGHT) / 2;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  return new Map(points.map((p) => [p.id, p]));
+}
+
 export function CampusMap({
   buildings,
   selected,
@@ -81,6 +116,16 @@ export function CampusMap({
       Object.entries(groups).map(([k, v]) => [k, v.join(" ")]),
     );
   }, [projection]);
+  const pins = useMemo(
+    () =>
+      declutter(
+        BUILDINGS.map((b) => {
+          const p = projection(b.coordinates)!;
+          return { id: b.id, x: p[0] * view.zoom, y: p[1] * view.zoom };
+        }),
+      ),
+    [projection, view.zoom],
+  );
   const tx = (size.width / 2) * (1 - view.zoom) + view.x;
   const ty = (size.height / 2) * (1 - view.zoom) + view.y;
   return (
@@ -142,7 +187,7 @@ export function CampusMap({
         </g>
       </svg>
       {buildings.map((b) => {
-        const p = projection(b.coordinates)!;
+        const p = pins.get(b.id)!;
         const r = risk(b.exposureRate);
         return (
           <button
@@ -153,8 +198,8 @@ export function CampusMap({
             aria-pressed={selected === b.id}
             style={
               {
-                left: pixel(p[0] * view.zoom + tx),
-                top: pixel(p[1] * view.zoom + ty),
+                left: pixel(p.x + tx),
+                top: pixel(p.y + ty),
                 "--pin-color": r.color,
               } as React.CSSProperties
             }
