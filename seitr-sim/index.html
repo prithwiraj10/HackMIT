@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Freshman Flu — SEITR Campus Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1418;
+    --panel: #121c22;
+    --panel-2: #172530;
+    --line: #22343f;
+    --text: #dbe7ec;
+    --muted: #7f97a3;
+    --accent: #5fc2b4;
+    --S: #6b8cae;
+    --E: #3fa7a0;
+    --I: #c5d65a;
+    --T: #98b092;
+    --R: #1f6b4a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; font-weight: 300; }
+  body { display: grid; grid-template-columns: 300px 1fr; grid-template-rows: 56px 1fr; height: 100vh; }
+  header { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; padding: 0 22px;
+    border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 15px; font-weight: 500; letter-spacing: .02em; margin: 0; }
+  header h1 span { color: var(--muted); font-weight: 300; margin-left: 8px; }
+  .spacer { flex: 1; }
+  .day { font-size: 13px; color: var(--muted); }
+  .day b { font-weight: 500; color: var(--text); font-size: 20px; margin-left: 6px; font-variant-numeric: tabular-nums; }
+  .controls { display: flex; gap: 6px; align-items: center; }
+  button { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 13px; font: inherit; font-size: 13px; font-weight: 400; cursor: pointer; transition: background .2s, border-color .2s; }
+  button:hover { background: #1e303c; border-color: #2d4552; }
+  button.primary { background: var(--accent); color: #07211d; border-color: transparent; font-weight: 500; min-width: 84px; }
+  button.primary:hover { background: #74d2c5; }
+  aside { border-right: 1px solid var(--line); background: var(--panel); padding: 18px 20px; overflow-y: auto; }
+  aside h2 { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); margin: 18px 0 10px; }
+  aside h2:first-child { margin-top: 0; }
+  .slider { margin-bottom: 12px; }
+  .slider label { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px; }
+  .slider label output { color: var(--accent); font-weight: 400; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; -webkit-appearance: none; appearance: none; height: 3px; background: var(--line); border-radius: 2px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); box-shadow: 0 0 0 1px var(--accent); cursor: pointer; }
+  input[type=range]::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: none; cursor: pointer; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font-size: 12.5px; }
+  .legend div { display: flex; align-items: center; gap: 8px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+  .hint code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  .file { display: block; margin: 8px 0; }
+  .file input { display: none; }
+  .file button { width: 100%; }
+  .status { font-size: 11.5px; color: var(--accent); min-height: 16px; margin-top: 4px; }
+  main { display: grid; grid-template-rows: 1fr 220px; min-height: 0; }
+  #network { position: relative; min-height: 0; }
+  #network svg { width: 100%; height: 100%; display: block; }
+  #chart { border-top: 1px solid var(--line); background: var(--panel); }
+  #chart svg { width: 100%; height: 100%; display: block; }
+  .tooltip { position: absolute; pointer-events: none; background: rgba(18,28,34,.95); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 11px; font-size: 12px; line-height: 1.5; opacity: 0; transition: opacity .15s; backdrop-filter: blur(6px); }
+  .tooltip b { font-weight: 500; }
+  .tooltip .type { color: var(--muted); font-size: 11px; text-transform: capitalize; }
+  .node-label { font-size: 11px; font-weight: 300; fill: #b7c8d1; pointer-events: none; text-anchor: middle; }
+  .node-type { font-size: 9px; font-weight: 300; fill: var(--muted); text-transform: uppercase; letter-spacing: .08em; pointer-events: none; text-anchor: middle; }
+  .axis text { fill: var(--muted); font-size: 10.5px; font-family: inherit; font-weight: 300; }
+  .axis line, .axis path { stroke: var(--line); }
+  .grid line { stroke: var(--line); stroke-opacity: .6; }
+  .chart-legend text { fill: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Freshman Flu <span>SEITR campus simulation</span></h1>
+  <div class="spacer"></div>
+  <div class="day">Day <b id="dayCounter">0</b></div>
+  <div class="controls">
+    <button id="playBtn" class="primary">Play</button>
+    <button id="stepBtn">Step</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+</header>
+
+<aside>
+  <h2>Playback</h2>
+  <div class="slider"><label>Speed <output id="speedOut"></output></label>
+    <input type="range" id="speed" min="1" max="20" step="1" value="4"></div>
+
+  <h2>Epidemiology</h2>
+  <div class="slider"><label>Transmission rate β <output id="betaOut"></output></label>
+    <input type="range" id="beta" min="0.05" max="1.5" step="0.01" value="0.45"></div>
+  <div class="slider"><label>Incubation period (E) <output id="incubOut"></output></label>
+    <input type="range" id="incub" min="0.5" max="10" step="0.5" value="2"></div>
+  <div class="slider"><label>Infectious period (I) <output id="infOut"></output></label>
+    <input type="range" id="inf" min="0.5" max="14" step="0.5" value="3"></div>
+  <div class="slider"><label>Isolation period (T) <output id="isoOut"></output></label>
+    <input type="range" id="iso" min="0.5" max="14" step="0.5" value="5"></div>
+  <div class="slider"><label>Fraction seeking treatment <output id="fracTOut"></output></label>
+    <input type="range" id="fracT" min="0" max="1" step="0.05" value="0.6"></div>
+
+  <h2>Cross-building spillover</h2>
+  <div class="slider"><label>Distance decay scale <output id="decayOut"></output></label>
+    <input type="range" id="decay" min="50" max="1500" step="10" value="350"></div>
+  <div class="slider"><label>Spillover strength <output id="crossOut"></output></label>
+    <input type="range" id="cross" min="0" max="1" step="0.01" value="0.25"></div>
+
+  <h2>Compartments</h2>
+  <div class="legend">
+    <div><i style="background:var(--S)"></i>Susceptible</div>
+    <div><i style="background:var(--E)"></i>Exposed</div>
+    <div><i style="background:var(--I)"></i>Infectious</div>
+    <div><i style="background:var(--T)"></i>Treated / isolated</div>
+    <div><i style="background:var(--R)"></i>Recovered</div>
+  </div>
+
+  <h2>Data</h2>
+  <label class="file"><input type="file" id="fileInput" accept=".json,.csv" />
+    <button type="button" onclick="document.getElementById('fileInput').click()">Load buildings (JSON / CSV)</button></label>
+  <div class="status" id="status"></div>
+  <p class="hint">
+    JSON: <code>{"buildings":[{"name","type","population?"}], "distances":[[…]]}</code> (matrix in metres, same order as buildings) or
+    <code>"distances":[{"from","to","distance"}]</code>.<br/>
+    CSV: columns <code>name,type,population,&lt;one column per building name&gt;</code> forming the distance matrix.
+    Node positions are derived from the distance matrix (MDS). Hover a node for details; drag to rearrange.
+  </p>
+</aside>
+
+<main>
+  <div id="network"><svg></svg><div class="tooltip" id="tooltip"></div></div>
+  <div id="chart"><svg></svg></div>
+</main>
+
+<script>
+// ────────────────────────────────────────────────────────────────────────────
+// SAMPLE DATA — replace via the "Load buildings" button, or edit here.
+// Distances are approximate metres between buildings on a small campus.
+// ────────────────────────────────────────────────────────────────────────────
+const SAMPLE_DATA = (() => {
+  const buildings = [
+    { name: "Baker House",      type: "dorm",        population: 320 },
+    { name: "Maseeh Hall",      type: "dorm",        population: 460 },
+    { name: "East Campus",      type: "dorm",        population: 380 },
+    { name: "Simmons Hall",     type: "dorm",        population: 340 },
+    { name: "Next House",       type: "dorm",        population: 350 },
+    { name: "Student Center",   type: "dining hall", population: 260 },
+    { name: "Walker Memorial",  type: "dining hall", population: 180 },
+    { name: "Hayden Library",   type: "library",     population: 150 },
+    { name: "Building 10",      type: "classroom",   population: 400 },
+    { name: "Building 26",      type: "classroom",   population: 300 },
+    { name: "Stata Center",     type: "classroom",   population: 350 },
+    { name: "Media Lab",        type: "lab",         population: 160 },
+    { name: "Zesiger Gym",      type: "gym",         population: 220 },
+    { name: "Kresge Auditorium",type: "auditorium",  population: 120 },
+  ];
+  // Rough planar coordinates (metres) used only to synthesise a plausible distance matrix.
+  const xy = [
+    [80, 420], [260, 400], [1150, 300], [-120, 120], [-80, 440],
+    [330, 250], [780, 330], [560, 380], [520, 200], [820, 130],
+    [1020, 60], [1180, 180], [220, 140], [270, 320],
+  ];
+  const distances = xy.map(a => xy.map(b => Math.round(Math.hypot(a[0]-b[0], a[1]-b[1]))));
+  return { buildings, distances };
+})();
+
+// Baseline within-building contact multipliers by building type.
+const CONTACT_RATES = {
+  "dorm": 1.4, "dining hall": 1.6, "dining": 1.6, "classroom": 0.8, "lecture hall": 0.8,
+  "library": 0.6, "lab": 0.9, "gym": 1.1, "auditorium": 1.0, "office": 0.5, "default": 0.9,
+};
+const contactRate = t => CONTACT_RATES[(t || "").toLowerCase()] ?? CONTACT_RATES.default;
+const TREATED_CONTACT = 0.15;           // relative infectiousness of isolated individuals
+const COMPARTMENTS = ["S", "E", "I", "T", "R"];
+const COLORS = { S: "#6b8cae", E: "#3fa7a0", I: "#c5d65a", T: "#98b092", R: "#1f6b4a" };
+const LABELS = { S: "Susceptible", E: "Exposed", I: "Infectious", T: "Treated", R: "Recovered" };
+
+// ────────────────────────────────────────────────────────────────────────────
+// Data loading
+// ────────────────────────────────────────────────────────────────────────────
+function normaliseData(raw) {
+  const buildings = raw.buildings.map((b, i) => ({
+    name: b.name ?? `Building ${i+1}`, type: b.type ?? "default",
+    population: +b.population > 0 ? +b.population : null,
+  }));
+  const n = buildings.length;
+  let D;
+  if (Array.isArray(raw.distances) && Array.isArray(raw.distances[0])) {
+    D = raw.distances.map(r => r.map(Number));
+  } else {
+    const idx = new Map(buildings.map((b, i) => [b.name, i]));
+    D = Array.from({ length: n }, () => Array(n).fill(NaN));
+    for (const e of raw.distances) {
+      const a = idx.get(e.from), b = idx.get(e.to);
+      if (a == null || b == null) continue;
+      D[a][b] = D[b][a] = +e.distance;
+    }
+    const max = d3.max(D.flat().filter(Number.isFinite)) || 1;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (!Number.isFinite(D[i][j])) D[i][j] = i === j ? 0 : max * 1.5;
+  }
+  // Populations: use provided values, else distribute evenly weighted by type contact rate.
+  const total = 3000;
+  const missing = buildings.filter(b => b.population == null);
+  if (missing.length) {
+    const given = d3.sum(buildings, b => b.population ?? 0);
+    const wsum = d3.sum(missing, b => contactRate(b.type));
+    for (const b of missing) b.population = Math.round(Math.max(0, total - given) * contactRate(b.type) / wsum);
+  }
+  return { buildings, distances: D };
+}
+
+function parseCSV(text) {
+  const rows = d3.csvParseRows(text.trim());
+  const header = rows[0].map(h => h.trim());
+  const body = rows.slice(1).filter(r => r.length > 1);
+  const names = body.map(r => r[0].trim());
+  const colIdx = new Map(header.map((h, i) => [h, i]));
+  const buildings = body.map(r => ({
+    name: r[0].trim(), type: r[colIdx.get("type")] ?? "default",
+    population: colIdx.has("population") ? +r[colIdx.get("population")] : null,
+  }));
+  const distances = body.map(r => names.map(nm => +r[colIdx.get(nm)] || 0));
+  return { buildings, distances };
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Layout — classical MDS from distance matrix, scaled to viewport.
+// ────────────────────────────────────────────────────────────────────────────
+function mdsLayout(D) {
+  const n = D.length;
+  const D2 = D.map(r => r.map(d => d * d));
+  const rowMean = D2.map(r => d3.mean(r));
+  const totalMean = d3.mean(rowMean);
+  const B = D2.map((r, i) => r.map((v, j) => -0.5 * (v - rowMean[i] - rowMean[j] + totalMean)));
+  const powerIter = (M, deflate) => {
+    let v = Array.from({ length: n }, (_, i) => Math.sin(i * 1.7 + 0.3));
+    let lambda = 0;
+    for (let it = 0; it < 300; it++) {
+      let w = M.map(r => d3.sum(r.map((m, j) => m * v[j])));
+      for (const [ev, eval_] of deflate) { const dot = d3.sum(w.map((x, i) => x * ev[i])); w = w.map((x, i) => x - dot * ev[i]); }
+      const norm = Math.hypot(...w) || 1;
+      lambda = norm; v = w.map(x => x / norm);
+    }
+    return [v, lambda];
+  };
+  const [v1, l1] = powerIter(B, []);
+  const [v2, l2] = powerIter(B, [[v1, l1]]);
+  return v1.map((x, i) => [x * Math.sqrt(Math.max(l1, 0)), v2[i] * Math.sqrt(Math.max(l2, 0))]);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Simulation
+// ────────────────────────────────────────────────────────────────────────────
+const params = {};
+let data, nodes, W, day, history, running = false, timer = null, flows;
+const sliderDefs = [
+  ["speed", "speedOut", v => `${v} day/s`],
+  ["beta", "betaOut", v => v.toFixed(2)],
+  ["incub", "incubOut", v => `${v} d`],
+  ["inf", "infOut", v => `${v} d`],
+  ["iso", "isoOut", v => `${v} d`],
+  ["fracT", "fracTOut", v => `${Math.round(v*100)}%`],
+  ["decay", "decayOut", v => `${v} m`],
+  ["cross", "crossOut", v => v.toFixed(2)],
+];
+for (const [id, out, fmt] of sliderDefs) {
+  const el = document.getElementById(id), o = document.getElementById(out);
+  const update = () => { params[id] = +el.value; o.textContent = fmt(+el.value); if (id === "speed" && running) restartTimer(); };
+  el.addEventListener("input", update); update();
+}
+
+function initSim(raw) {
+  data = normaliseData(raw);
+  const n = data.buildings.length;
+  const pos = mdsLayout(data.distances);
+  nodes = data.buildings.map((b, i) => ({
+    ...b, id: i, contact: contactRate(b.type), mx: pos[i][0], my: pos[i][1], N: b.population,
+    S: b.population, E: 0, I: 0, T: 0, R: 0,
+  }));
+  // Seed: a handful of infections in the largest dorm.
+  const seed = nodes.filter(d => d.type.toLowerCase() === "dorm").sort((a, b) => b.N - a.N)[0] ?? nodes[0];
+  seed.I = Math.min(5, seed.N); seed.S -= seed.I; seed.E = Math.min(3, seed.S); seed.S -= seed.E;
+  day = 0; history = [snapshot()];
+  flows = Array.from({ length: n }, () => Array(n).fill(0));
+  buildNetwork(); buildChart(); render(0);
+}
+
+function weights() {
+  const n = nodes.length, lam = params.decay;
+  W = data.distances.map((r, i) => r.map((d, j) => i === j ? 0 : Math.exp(-d / lam)));
+}
+
+function step() {
+  weights();
+  const n = nodes.length;
+  const sE = 1 / params.incub, sI = 1 / params.inf, sT = 1 / params.iso;
+  const next = nodes.map(d => ({ S: d.S, E: d.E, I: d.I, T: d.T, R: d.R }));
+  const prevalence = nodes.map(d => d.N > 0 ? (d.I + TREATED_CONTACT * d.T) / d.N : 0);
+  for (let i = 0; i < n; i++) {
+    const d = nodes[i];
+    const internal = params.beta * d.contact * prevalence[i];
+    let external = 0;
+    for (let j = 0; j < n; j++) if (j !== i) {
+      const f = params.beta * params.cross * W[i][j] * prevalence[j];
+      external += f; flows[i][j] = f * d.S;
+    }
+    const lambda = internal + external;
+    const newE = d.S * (1 - Math.exp(-lambda));
+    const EtoI = d.E * (1 - Math.exp(-sE));
+    const outI = d.I * (1 - Math.exp(-sI));
+    const ItoT = outI * params.fracT, ItoR = outI - ItoT;
+    const TtoR = d.T * (1 - Math.exp(-sT));
+    next[i].S -= newE; next[i].E += newE - EtoI; next[i].I += EtoI - outI;
+    next[i].T += ItoT - TtoR; next[i].R += ItoR + TtoR;
+  }
+  nodes.forEach((d, i) => Object.assign(d, next[i]));
+  day++; history.push(snapshot());
+}
+
+function snapshot() {
+  const s = { day };
+  for (const c of COMPARTMENTS) s[c] = d3.sum(nodes, d => d[c]);
+  return s;
+}
+
+function tick() { step(); render(Math.min(900, 1000 / params.speed * 0.85)); }
+function restartTimer() { clearInterval(timer); timer = setInterval(tick, 1000 / params.speed); }
+function setRunning(r) {
+  running = r; document.getElementById("playBtn").textContent = r ? "Pause" : "Play";
+  if (r) restartTimer(); else clearInterval(timer);
+}
+document.getElementById("playBtn").onclick = () => setRunning(!running);
+document.getElementById("stepBtn").onclick = () => { setRunning(false); step(); render(500); };
+document.getElementById("resetBtn").onclick = () => { setRunning(false); initSim(data ?? SAMPLE_DATA); };
+
+document.getElementById("fileInput").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const text = await f.text();
+    const raw = f.name.toLowerCase().endsWith(".csv") ? parseCSV(text) : JSON.parse(text);
+    setRunning(false); initSim(raw);
+    document.getElementById("status").textContent = `Loaded ${raw.buildings.length} buildings from ${f.name}`;
+  } catch (err) {
+    document.getElementById("status").textContent = `Could not parse file: ${err.message}`;
+  }
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// Network visualisation
+// ────────────────────────────────────────────────────────────────────────────
+const netSvg = d3.select("#network svg");
+const tooltip = d3.select("#tooltip");
+let gEdges, gNodes, edgeSel, nodeSel, radius, edges;
+const arcGen = d3.arc();
+
+function buildNetwork() {
+  netSvg.selectAll("*").remove();
+  const { width, height } = netSvg.node().getBoundingClientRect();
+  const defs = netSvg.append("defs");
+  const glow = defs.append("filter").attr("id", "glow").attr("x", "-60%").attr("y", "-60%").attr("width", "220%").attr("height", "220%");
+  glow.append("feGaussianBlur").attr("stdDeviation", 6).attr("result", "blur");
+  const merge = glow.append("feMerge"); merge.append("feMergeNode").attr("in", "blur"); merge.append("feMergeNode").attr("in", "SourceGraphic");
+  const shadow = defs.append("filter").attr("id", "shadow").attr("x", "-40%").attr("y", "-40%").attr("width", "180%").attr("height", "180%");
+  shadow.append("feDropShadow").attr("dx", 0).attr("dy", 2).attr("stdDeviation", 3).attr("flood-color", "#000").attr("flood-opacity", .45);
+
+  // Scale MDS coordinates into the viewport with padding.
+  const pad = 90;
+  const xs = d3.extent(nodes, d => d.mx), ys = d3.extent(nodes, d => d.my);
+  const k = Math.min((width - 2*pad) / ((xs[1]-xs[0]) || 1), (height - 2*pad) / ((ys[1]-ys[0]) || 1));
+  const cx = (xs[0]+xs[1])/2, cy = (ys[0]+ys[1])/2;
+  nodes.forEach(d => { d.x = width/2 + (d.mx - cx) * k; d.y = height/2 + (d.my - cy) * k; });
+  radius = d3.scaleSqrt().domain([0, d3.max(nodes, d => d.N)]).range([10, 34]);
+
+  // Gentle collision pass so donuts don't overlap while preserving MDS structure.
+  d3.forceSimulation(nodes).force("collide", d3.forceCollide(d => radius(d.N) + 22).strength(.8))
+    .force("x", d3.forceX(d => d.x).strength(.4)).force("y", d3.forceY(d => d.y).strength(.4))
+    .stop().tick(120);
+
+  const maxD = d3.max(data.distances.flat());
+  edges = [];
+  for (let i = 0; i < nodes.length; i++) for (let j = i+1; j < nodes.length; j++)
+    edges.push({ source: nodes[i], target: nodes[j], d: data.distances[i][j], i, j });
+  // Keep the graph legible: show each node's nearest neighbours + all edges under 40% of max distance.
+  const keep = new Set();
+  nodes.forEach((_, i) => {
+    const ranked = edges.filter(e => e.i === i || e.j === i).sort((a, b) => a.d - b.d).slice(0, 3);
+    ranked.forEach(e => keep.add(e));
+  });
+  edges = edges.filter(e => keep.has(e) || e.d < 0.4 * maxD);
+
+  gEdges = netSvg.append("g").attr("class", "edges");
+  gNodes = netSvg.append("g").attr("class", "nodes");
+
+  edgeSel = gEdges.selectAll("path").data(edges).join("path")
+    .attr("fill", "none").attr("stroke", "#5fc2b4").attr("stroke-linecap", "round")
+    .attr("d", edgePath);
+
+  nodeSel = gNodes.selectAll("g.node").data(nodes).join("g").attr("class", "node")
+    .attr("transform", d => `translate(${d.x},${d.y})`)
+    .call(d3.drag().on("drag", (ev, d) => { d.x = ev.x; d.y = ev.y; positionNodes(); }))
+    .on("mousemove", (ev, d) => {
+      const [mx, my] = d3.pointer(ev, document.getElementById("network"));
+      tooltip.style("opacity", 1).style("left", (mx + 16) + "px").style("top", (my + 8) + "px").html(
+        `<b>${d.name}</b><div class="type">${d.type} · N=${d.N} · contact ×${d.contact}</div>` +
+        COMPARTMENTS.map(c => `<span style="color:${COLORS[c]}">●</span> ${LABELS[c]} ${Math.round(d[c])}`).join("<br/>"));
+    })
+    .on("mouseleave", () => tooltip.style("opacity", 0));
+
+  nodeSel.append("circle").attr("class", "halo").attr("r", d => radius(d.N) + 6).attr("fill", COLORS.I).attr("opacity", 0).attr("filter", "url(#glow)");
+  nodeSel.append("circle").attr("class", "pulse").attr("r", d => radius(d.N)).attr("fill", "none").attr("stroke", COLORS.I).attr("stroke-width", 1.5).attr("opacity", 0);
+  nodeSel.append("circle").attr("class", "bg").attr("r", d => radius(d.N)).attr("fill", "#0f1a20").attr("filter", "url(#shadow)");
+  const ring = nodeSel.append("g").attr("class", "ring");
+  ring.selectAll("path").data(d => COMPARTMENTS.map(c => ({ c, node: d, a0: 0, a1: 0 }))).join("path")
+    .attr("fill", d => COLORS[d.c]).attr("stroke", "#0f1a20").attr("stroke-width", .8);
+  nodeSel.append("circle").attr("class", "core").attr("r", d => radius(d.N) * .52).attr("fill", "#121c22");
+  nodeSel.append("text").attr("class", "node-label").attr("y", d => radius(d.N) + 16).text(d => d.name);
+  nodeSel.append("text").attr("class", "node-type").attr("y", d => radius(d.N) + 28).text(d => d.type);
+}
+
+function edgePath(e) {
+  const { source: a, target: b } = e;
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1;
+  const curve = Math.min(60, len * 0.22);          // perpendicular offset for the control point
+  const mx = (a.x + b.x) / 2 - dy / len * curve, my = (a.y + b.y) / 2 + dx / len * curve;
+  return `M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`;
+}
+
+function positionNodes() {
+  nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
+  edgeSel.attr("d", edgePath);
+}
+
+function render(dur) {
+  document.getElementById("dayCounter").textContent = day;
+  const t = d3.transition().duration(dur).ease(d3.easeCubicInOut);
+
+  // Edges: base opacity from distance weight, boosted by current cross-infection flow.
+  weights();
+  const maxFlow = d3.max(edges, e => flows[e.i][e.j] + flows[e.j][e.i]) || 1;
+  edgeSel.transition(t)
+    .attr("stroke-opacity", e => 0.05 + 0.25 * W[e.i][e.j] + 0.5 * ((flows[e.i][e.j] + flows[e.j][e.i]) / maxFlow))
+    .attr("stroke-width", e => 0.6 + 1.2 * W[e.i][e.j] + 3 * ((flows[e.i][e.j] + flows[e.j][e.i]) / maxFlow))
+    .attr("stroke", e => d3.interpolateRgb("#3d6b7a", COLORS.I)((flows[e.i][e.j] + flows[e.j][e.i]) / maxFlow));
+
+  // Donut rings with interpolated arc angles for smooth transitions.
+  nodeSel.select(".ring").selectAll("path").each(function (d) {
+    const n = d.node, r = radius(n.N);
+    let start = 0;
+    for (const c of COMPARTMENTS) { const frac = n.N > 0 ? n[c] / n.N : 0; if (c === d.c) { d.na0 = start * 2 * Math.PI; d.na1 = (start + frac) * 2 * Math.PI; } start += frac; }
+    d.r = r;
+  }).transition(t).attrTween("d", function (d) {
+    const i0 = d3.interpolate(d.a0, d.na0), i1 = d3.interpolate(d.a1, d.na1);
+    return tt => { d.a0 = i0(tt); d.a1 = i1(tt); return arcGen({ innerRadius: d.r * .55, outerRadius: d.r, startAngle: d.a0, endAngle: d.a1 }); };
+  });
+
+  // Glow & pulse on actively transmitting nodes; node grows slightly with infection share.
+  const inf = d => (d.I + d.E * .4) / (d.N || 1);
+  nodeSel.select(".halo").transition(t).attr("opacity", d => Math.min(.85, inf(d) * 2.2)).attr("r", d => radius(d.N) + 6 + inf(d) * 16);
+  nodeSel.select(".bg").transition(t).attr("r", d => radius(d.N) * (1 + inf(d) * .35));
+  nodeSel.select(".core").transition(t).attr("fill", d => d3.interpolateRgb("#121c22", "#233d36")(Math.min(1, inf(d) * 3)));
+  nodeSel.select(".pulse").each(function (d) {
+    if (inf(d) > 0.01) {
+      d3.select(this).interrupt().attr("r", radius(d.N)).attr("opacity", Math.min(.8, inf(d) * 2 + .2))
+        .transition().duration(Math.max(600, dur * 1.4)).ease(d3.easeCubicOut)
+        .attr("r", radius(d.N) + 18 + inf(d) * 30).attr("opacity", 0);
+    }
+  });
+
+  renderChart(t);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Aggregate line chart
+// ────────────────────────────────────────────────────────────────────────────
+const chartSvg = d3.select("#chart svg");
+let cx, cy, cLines, cXAxis, cYAxis, cGrid, cMargin, cW, cH, cCursor;
+
+function buildChart() {
+  chartSvg.selectAll("*").remove();
+  const { width, height } = chartSvg.node().getBoundingClientRect();
+  cMargin = { top: 18, right: 130, bottom: 30, left: 56 };
+  cW = width - cMargin.left - cMargin.right; cH = height - cMargin.top - cMargin.bottom;
+  const g = chartSvg.append("g").attr("transform", `translate(${cMargin.left},${cMargin.top})`);
+  cx = d3.scaleLinear().range([0, cW]); cy = d3.scaleLinear().domain([0, d3.sum(nodes, d => d.N)]).range([cH, 0]).nice();
+  cGrid = g.append("g").attr("class", "grid");
+  cXAxis = g.append("g").attr("class", "axis").attr("transform", `translate(0,${cH})`);
+  cYAxis = g.append("g").attr("class", "axis");
+  cLines = g.append("g");
+  cLines.selectAll("path").data(COMPARTMENTS).join("path").attr("fill", "none").attr("stroke", c => COLORS[c]).attr("stroke-width", 1.8).attr("stroke-linejoin", "round");
+  cCursor = g.append("line").attr("stroke", "#5fc2b4").attr("stroke-opacity", .5).attr("stroke-dasharray", "3 3").attr("y1", 0).attr("y2", cH);
+  const leg = g.append("g").attr("class", "chart-legend").attr("transform", `translate(${cW + 16},0)`);
+  const li = leg.selectAll("g").data(COMPARTMENTS).join("g").attr("transform", (c, i) => `translate(0,${i * 17 + 4})`);
+  li.append("rect").attr("width", 10).attr("height", 10).attr("rx", 3).attr("fill", c => COLORS[c]);
+  li.append("text").attr("x", 16).attr("y", 9).attr("class", "leg-text").text(c => LABELS[c]);
+  g.append("text").attr("x", -cMargin.left + 4).attr("y", -6).attr("fill", "#7f97a3").attr("font-size", 10.5).text("people");
+  g.append("text").attr("x", cW).attr("y", cH + 26).attr("text-anchor", "end").attr("fill", "#7f97a3").attr("font-size", 10.5).text("day");
+}
+
+function renderChart(t) {
+  cx.domain([0, Math.max(30, day)]);
+  cXAxis.transition(t).call(d3.axisBottom(cx).ticks(8).tickSize(4).tickFormat(d3.format("d")));
+  cYAxis.call(d3.axisLeft(cy).ticks(4).tickSize(4).tickFormat(d3.format("~s")));
+  cGrid.selectAll("line").data(cy.ticks(4)).join("line").attr("x1", 0).attr("x2", cW).attr("y1", d => cy(d)).attr("y2", d => cy(d));
+  const line = c => d3.line().x(d => cx(d.day)).y(d => cy(d[c])).curve(d3.curveMonotoneX)(history);
+  cLines.selectAll("path").transition(t).attr("d", c => line(c));
+  cCursor.transition(t).attr("x1", cx(day)).attr("x2", cx(day));
+  // Legend counts
+  chartSvg.selectAll(".leg-text").text(c => `${LABELS[c]}  ${d3.format(",.0f")(history[history.length-1][c])}`);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+window.addEventListener("resize", () => { if (!data) return; buildNetwork(); buildChart(); render(0); });
+initSim(SAMPLE_DATA);
+</script>
+</body>
+</html>
