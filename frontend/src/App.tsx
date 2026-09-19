@@ -59,6 +59,8 @@ export default function App() {
       setLayout(l)
       setResult(null)
       setFrameIdx(0)
+      setSelectedRoom(null)
+      setPlaying(false)
     })
 
   const uploadFile = (file: File) =>
@@ -67,6 +69,8 @@ export default function App() {
       setLayout(l)
       setResult(null)
       setFrameIdx(0)
+      setSelectedRoom(null)
+      setPlaying(false)
     })
 
   const simulate = () => {
@@ -198,7 +202,7 @@ export default function App() {
             <div className="card">
               <h2>2. Room labels</h2>
               <p className="meta">Click a region on the plan, then pick its type. Labels drive schedules.</p>
-              {selectedRoom !== null ? (
+              {selectedRoom !== null && layout.rooms[selectedRoom] ? (
                 <div className="labels">
                   <strong>Region {selectedRoom}</strong>
                   {LABELS.map((l) => (
