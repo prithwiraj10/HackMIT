@@ -461,9 +461,12 @@ function fitToViewport(width, height) {
   const ox = m - x0 * k + ((width - 2*m) - (x1 - x0) * k) / 2;
   const oy = m - y0 * k + ((height - 2*m) - (y1 - y0) * k) / 2;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, Math.max(lo, hi)));
+  nodes.forEach(d => { d.x = d.x * k + ox; d.y = d.y * k + oy; });
+  // Shrink the circles by the same factor so the collision spacing survives the fit.
+  radius.range(radius.range().map(v => v * k));
   nodes.forEach(d => {
-    d.x = clamp(d.x * k + ox, r(d) + m, width - r(d) - m);
-    d.y = clamp(d.y * k + oy, r(d) + m, height - r(d) - labelSpace - m);
+    d.x = clamp(d.x, r(d) + m, width - r(d) - m);
+    d.y = clamp(d.y, r(d) + m, height - r(d) - labelSpace - m);
   });
 }
 
