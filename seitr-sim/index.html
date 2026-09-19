@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Freshman Flu — SEITR Campus Simulation</title>
+<title>Freshman Flu — SEITR Campus Simulation (MIT)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="mit-campus.js"></script>
 <style>
   :root {
     --bg: #0d1418;
@@ -76,7 +77,7 @@
 </head>
 <body>
 <header>
-  <h1>Freshman Flu <span>SEITR campus simulation</span></h1>
+  <h1>Freshman Flu <span>SEITR simulation · MIT campus</span></h1>
   <div class="spacer"></div>
   <div class="day">Day <b id="dayCounter">0</b></div>
   <div class="controls">
@@ -123,6 +124,8 @@
     <button type="button" onclick="document.getElementById('fileInput').click()">Load buildings (JSON / CSV)</button></label>
   <div class="status" id="status"></div>
   <p class="hint">
+    Default dataset: 32 MIT buildings with sample student sizes and estimated walking distances
+    (<code>mit-campus.js</code>, rebuilt from <code>data/</code> by <code>tools/build_mit_dataset.py</code>).<br/>
     JSON: <code>{"buildings":[{"name","type","population?"}], "distances":[[…]]}</code> (matrix in metres, same order as buildings) or
     <code>"distances":[{"from","to","distance"}]</code>.<br/>
     CSV: columns <code>name,type,population,&lt;one column per building name&gt;</code> forming the distance matrix.
@@ -170,7 +173,9 @@ const SAMPLE_DATA = (() => {
 // Baseline within-building contact multipliers by building type.
 const CONTACT_RATES = {
   "dorm": 1.4, "dining hall": 1.6, "dining": 1.6, "classroom": 0.8, "lecture hall": 0.8,
-  "library": 0.6, "lab": 0.9, "gym": 1.1, "auditorium": 1.0, "office": 0.5, "default": 0.9,
+  "library": 0.6, "lab": 0.9, "gym": 1.1, "auditorium": 1.0, "office": 0.5,
+  "academic": 0.8, "student_life": 1.3, "events": 1.0, "health": 0.7, "outdoor": 0.4,
+  "off_campus": 1.2, "default": 0.9,
 };
 const contactRate = t => CONTACT_RATES[(t || "").toLowerCase()] ?? CONTACT_RATES.default;
 const MAX_BUILDINGS = 300;
@@ -187,6 +192,7 @@ function normaliseData(raw) {
   const buildings = raw.buildings.map((b, i) => ({
     name: b.name ?? `Building ${i+1}`, type: b.type ?? "default",
     population: +b.population > 0 ? +b.population : null,
+    zone: b.zone ?? null, about: b.about ?? null, mitNumber: b.mitNumber ?? null,
   }));
   const n = buildings.length;
   if (!n) throw new Error("no buildings found");
@@ -343,7 +349,7 @@ function setRunning(r) {
 }
 document.getElementById("playBtn").onclick = () => setRunning(!running);
 document.getElementById("stepBtn").onclick = () => { setRunning(false); step(); render(500); };
-document.getElementById("resetBtn").onclick = () => { setRunning(false); initSim(data ?? SAMPLE_DATA); };
+document.getElementById("resetBtn").onclick = () => { setRunning(false); initSim(data ?? DEFAULT_DATA); };
 
 let importGen = 0;
 document.getElementById("fileInput").addEventListener("change", async e => {
@@ -419,7 +425,8 @@ function buildNetwork() {
       const [mx, my] = d3.pointer(ev, document.getElementById("network"));
       const flip = mx > box.width - 200;
       tooltip.html(
-        `<b>${esc(d.name)}</b><div class="type">${esc(d.type)} · N=${d.N} · contact ×${d.contact}</div>` +
+        `<b>${esc(d.mitNumber ? `${d.mitNumber} ${d.name}` : d.name)}</b>` +
+        `<div class="type">${esc(d.type)}${d.zone ? ` · ${esc(d.zone)}` : ""} · N=${d.N} · contact ×${d.contact}</div>` +
         COMPARTMENTS.map(c => `<span style="color:${COLORS[c]}">●</span> ${LABELS[c]} ${Math.round(d[c])}`).join("<br/>"));
       const th = tooltip.node().offsetHeight;
       tooltip.style("opacity", 1).style("left", flip ? "auto" : (mx + 16) + "px").style("right", flip ? (box.width - mx + 16) + "px" : "auto")
@@ -531,7 +538,11 @@ function renderChart(t) {
 
 // ────────────────────────────────────────────────────────────────────────────
 window.addEventListener("resize", () => { if (!data) return; buildNetwork(); buildChart(); render(0); });
-initSim(SAMPLE_DATA);
+const DEFAULT_DATA = window.MIT_CAMPUS ?? SAMPLE_DATA;
+initSim(DEFAULT_DATA);
+document.getElementById("status").textContent = window.MIT_CAMPUS
+  ? `MIT campus: ${window.MIT_CAMPUS.buildings.length} buildings, ${d3.format(",")(d3.sum(nodes, d => d.N))} students`
+  : "MIT dataset not found — showing the built-in sample campus";
 </script>
 </body>
 </html>

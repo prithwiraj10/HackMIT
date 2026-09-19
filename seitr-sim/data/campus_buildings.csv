@@ -1,0 +1,33 @@
+id,mit_number,name,zone,primary_type,hosts,what_it_does,address,lat,lon,function_confidence,coords_status
+maseeh,W1,Maseeh Hall,west_dorms,dorm,dorm_room;dorm_common;dining;party,Undergraduate residence with house dining hall (Flowers Dining Room).,305 Memorial Dr,42.35745,-71.0948,high,estimated_pm100m
+mccormick,W4,McCormick Hall,west_dorms,dorm,dorm_room;dorm_common;dining;party,Undergraduate residence with house dining hall.,320 Memorial Dr,42.35725,-71.098,medium,estimated_pm100m
+baker,W7,Baker House,west_dorms,dorm,dorm_room;dorm_common;dining;party,Undergraduate residence with house dining hall.,362 Memorial Dr,42.35735,-71.09975,high,estimated_pm100m
+burton_conner,W51,Burton-Conner House,west_dorms,dorm,dorm_room;dorm_common;party,Undergraduate residence.,410 Memorial Dr,42.3576,-71.1017,high,estimated_pm100m
+macgregor,W61,MacGregor House,west_dorms,dorm,dorm_room;dorm_common;party,Undergraduate residence.,450 Memorial Dr,42.358,-71.1038,high,estimated_pm100m
+new_house,W70,New House,west_dorms,dorm,dorm_room;dorm_common;party,Undergraduate residence.,471 Memorial Dr,42.3585,-71.1052,high,estimated_pm100m
+next_house,W71,Next House,west_dorms,dorm,dorm_room;dorm_common;dining;party,"Undergraduate residence, far west end of campus; house dining.",500 Memorial Dr,42.3592,-71.1068,medium,estimated_pm100m
+simmons,W79,Simmons Hall,west_dorms,dorm,dorm_room;dorm_common;dining;party,Undergraduate residence on Vassar St; house dining.,229 Vassar St,42.362,-71.102,medium,estimated_pm100m
+east_campus,62,East Campus,east,dorm,dorm_room;dorm_common;party,"Undergraduate residence near Ames St, closest dorm to Kendall Sq.",,42.35905,-71.0881,medium,estimated_pm100m
+bldg7,7,Building 7 (Lobby 7),main_group,academic,lecture;orientation,Main entrance at 77 Mass Ave; west end of the Infinite Corridor; classrooms and offices.,77 Massachusetts Ave,42.35933,-71.0935,high,estimated_pm100m
+bldg3,3,Building 3,main_group,academic,lecture;lab,"Main Group link between Bldgs 7 and 10; classrooms, labs, offices.",,42.35935,-71.09268,medium,estimated_pm100m
+bldg10,10,Building 10 (Great Dome),main_group,academic,lecture;library;orientation,Great Dome and Lobby 10; Barker Engineering Library (10-500); Bush Room (10-105).,,42.3599,-71.09215,high,estimated_pm100m
+bldg2,2,Building 2 (Simons Building),main_group,academic,lecture,Mathematics; classrooms such as 2-190.,182 Memorial Dr,42.35915,-71.09148,high,estimated_pm100m
+bldg4,4,Building 4,main_group,academic,lecture;lab,Main Group classrooms (e.g. 4-370 lecture room) and labs.,,42.35962,-71.09135,medium,estimated_pm100m
+bldg6,6,Building 6,main_group,academic,lecture;lab,Chemistry; lecture hall 6-120.,,42.3596,-71.09052,medium,estimated_pm100m
+hayden,14,Building 14 (Hayden / Humanities),main_group,library,library;lecture,Hayden Library and Humanities; Lewis Music Library.,160 Memorial Dr,42.35935,-71.09,high,estimated_pm100m
+killian,,Killian Court,main_group,outdoor,outdoor;orientation,Great lawn south of Building 10 facing the river; outdoor event space.,,42.35895,-71.0919,high,estimated_pm100m
+bldg26,26,Building 26 (Compton Labs),north_vassar,academic,lecture,Large lecture hall 26-100 and labs.,60 Vassar St,42.3612,-71.0933,medium,estimated_pm100m
+bldg45,45,Building 45 (Schwarzman College of Computing),north_vassar,academic,lecture;lab,Schwarzman College of Computing; labs and classrooms.,51 Vassar St,42.3616,-71.0922,high,estimated_pm100m
+bldg46,46,Building 46 (Brain & Cognitive Sciences),north_vassar,academic,lab;lecture,Brain and Cognitive Sciences complex.,43 Vassar St,42.3618,-71.091,high,estimated_pm100m
+stata,32,Building 32 (Stata Center),north_vassar,academic,lecture;lab;dining,CSAIL and LIDS (Dreyfoos tower); large auditorium 32-123; cafes.,32 Vassar St,42.362,-71.0895,high,estimated_pm100m
+media_lab,E14/E15,Media Lab (E14/E15),kendall_east,academic,lab;lecture,Media Lab; Bartos Theatre (E15-070).,75 Amherst St,42.36055,-71.0872,high,estimated_pm100m
+sloan,E62,Sloan School (E62),kendall_east,academic,lecture,MIT Sloan School of Management classrooms.,100 Main St,42.361,-71.0839,medium,estimated_pm100m
+mit_medical,E23,MIT Medical (E23),kendall_east,health,health_center,"Campus health center: urgent care, primary care, pharmacy.",25 Carleton St,42.3628,-71.0856,high,estimated_pm100m
+student_center,W20,Stratton Student Center (W20),west_hub,student_life,dining;club_room;orientation,"Student org offices, food court, Tech Coop bookstore, event rooms; hub for student events.",84 Massachusetts Ave,42.35905,-71.09465,high,estimated_pm100m
+kresge,W16,Kresge Auditorium (W16),west_hub,events,orientation,Large auditorium for convocation-scale events.,48 Massachusetts Ave,42.35835,-71.09525,high,estimated_pm100m
+chapel,W15,MIT Chapel (W15),west_hub,student_life,club_room,Interfaith chapel; small gatherings and concerts.,48 Massachusetts Ave,42.3583,-71.09465,high,estimated_pm100m
+kresge_oval,,Kresge Oval,west_hub,outdoor,outdoor;orientation,"Lawn between Kresge, the Chapel and the Student Center.",,42.3587,-71.09495,high,estimated_pm100m
+zesiger,W35,Zesiger Sports & Fitness Center (W35),west_hub,gym,gym,"Gym, pool and courts.",120 Massachusetts Ave,42.36015,-71.09555,high,estimated_pm100m
+johnson,W34,Johnson Athletics Center (W34),west_hub,gym,gym;orientation,"Rockwell Cage, indoor track and ice rink; large indoor event space.",,42.36085,-71.097,medium,estimated_pm100m
+central_sq,,Central Square,off_campus,off_campus,dining;party,Restaurants and bars west of campus.,,42.3654,-71.1037,high,estimated_pm100m
+back_bay,,Back Bay fraternity/sorority houses,off_campus,off_campus,party;dorm_room,"Cluster of MIT fraternity, sorority and independent living groups across the Harvard Bridge.",,42.351,-71.087,medium,estimated_pm100m
