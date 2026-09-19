@@ -385,18 +385,22 @@ function buildNetwork() {
   const shadow = defs.append("filter").attr("id", "shadow").attr("x", "-40%").attr("y", "-40%").attr("width", "180%").attr("height", "180%");
   shadow.append("feDropShadow").attr("dx", 0).attr("dy", 2).attr("stdDeviation", 3).attr("flood-color", "#000").attr("flood-opacity", .45);
 
+  // Node size shrinks on small viewports and crowded campuses so the layout still fits.
+  const rMax = Math.max(14, Math.min(34, Math.sqrt(width * height / nodes.length) / 4.5));
+  radius = d3.scaleSqrt().domain([0, d3.max(nodes, d => d.N)]).range([rMax * .3, rMax]);
+
   // Scale MDS coordinates into the viewport with padding.
-  const pad = 90;
+  const pad = Math.min(90, Math.max(40, Math.min(width, height) * .12));
   const xs = d3.extent(nodes, d => d.mx), ys = d3.extent(nodes, d => d.my);
   const k = Math.min((width - 2*pad) / ((xs[1]-xs[0]) || 1), (height - 2*pad) / ((ys[1]-ys[0]) || 1));
   const cx = (xs[0]+xs[1])/2, cy = (ys[0]+ys[1])/2;
   nodes.forEach(d => { d.x = width/2 + (d.mx - cx) * k; d.y = height/2 + (d.my - cy) * k; });
-  radius = d3.scaleSqrt().domain([0, d3.max(nodes, d => d.N)]).range([10, 34]);
 
   // Gentle collision pass so donuts don't overlap while preserving MDS structure.
-  d3.forceSimulation(nodes).force("collide", d3.forceCollide(d => radius(d.N) + 22).strength(.8))
+  d3.forceSimulation(nodes).force("collide", d3.forceCollide(d => radius(d.N) + rMax * .6).strength(.8))
     .force("x", d3.forceX(d => d.x).strength(.4)).force("y", d3.forceY(d => d.y).strength(.4))
     .stop().tick(120);
+  fitToViewport(width, height);
 
   const maxD = d3.max(data.distances.flat());
   edges = [];
@@ -443,6 +447,40 @@ function buildNetwork() {
   nodeSel.append("circle").attr("class", "core").attr("r", d => radius(d.N) * .52).attr("fill", "#121c22");
   nodeSel.append("text").attr("class", "node-label").attr("y", d => radius(d.N) + 16).text(d => d.name);
   nodeSel.append("text").attr("class", "node-type").attr("y", d => radius(d.N) + 28).text(d => d.type);
+  declutterLabels();
+}
+
+// The collision pass can push nodes past the clipped edges of the viewport: shrink the
+// laid-out cloud until it fits, then clamp stragglers, leaving room for labels below.
+function fitToViewport(width, height) {
+  const m = 8, labelSpace = 30;
+  const r = d => radius(d.N);
+  const x0 = d3.min(nodes, d => d.x - r(d)), x1 = d3.max(nodes, d => d.x + r(d));
+  const y0 = d3.min(nodes, d => d.y - r(d)), y1 = d3.max(nodes, d => d.y + r(d) + labelSpace);
+  const k = Math.min(1, (width - 2*m) / ((x1 - x0) || 1), (height - 2*m) / ((y1 - y0) || 1));
+  const ox = m - x0 * k + ((width - 2*m) - (x1 - x0) * k) / 2;
+  const oy = m - y0 * k + ((height - 2*m) - (y1 - y0) * k) / 2;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, Math.max(lo, hi)));
+  nodes.forEach(d => {
+    d.x = clamp(d.x * k + ox, r(d) + m, width - r(d) - m);
+    d.y = clamp(d.y * k + oy, r(d) + m, height - r(d) - labelSpace - m);
+  });
+}
+
+// Hide labels that would collide with an already-placed one, largest nodes first.
+function declutterLabels() {
+  const placed = [];
+  const overlaps = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  nodeSel.selectAll("text").style("display", null);
+  nodeSel.nodes()
+    .map(g => ({ g, N: d3.select(g).datum().N }))
+    .sort((a, b) => b.N - a.N)
+    .forEach(({ g }) => {
+      const label = d3.select(g).select(".node-label").node();
+      const box = label.getBoundingClientRect();
+      if (placed.some(p => overlaps(p, box))) d3.select(g).selectAll("text").style("display", "none");
+      else placed.push(box);
+    });
 }
 
 function edgePath(e) {
@@ -456,6 +494,7 @@ function edgePath(e) {
 function positionNodes() {
   nodeSel.attr("transform", d => `translate(${d.x},${d.y})`);
   edgeSel.attr("d", edgePath);
+  declutterLabels();
 }
 
 function render(dur) {
