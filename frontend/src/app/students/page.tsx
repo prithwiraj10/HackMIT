@@ -1,12 +1,7 @@
-import { TitleBar } from "@/components/title-bar";
+import { Dashboard } from "@/components/dashboard";
 
 export const metadata = { title: "Students | Freshman Flu" };
 
 export default function Page() {
-  return (
-    <div className="audience-page">
-      <TitleBar title="Students" />
-      <main />
-    </div>
-  );
+  return <Dashboard />;
 }

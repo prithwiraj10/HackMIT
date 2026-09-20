@@ -11,17 +11,33 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. No account, API key, map billing, or backend is needed for the simulation itself. The map geometry is bundled locally. Scenario state is held in memory and resets when the page reloads. Export a run to keep its parameters and results.
+Open http://127.0.0.1:3000. The landing page leads to the simulation via the student button (`/students`) or the password-gated admin button (`/admin`). No account or backend is needed for the simulation itself; without a Google Maps key, the bundled offline campus map is used automatically. Scenario state is held in memory and resets when the page reloads. Export a run to keep its parameters and results.
 
 ### Chat assistant
 
-The "Ask the model" panel on `/simulation` answers natural-language questions using OpenAI function calling against real simulation runs. It needs a key:
+The "Ask the model" panel on the simulation answers natural-language questions using OpenAI function calling against real simulation runs. It needs a key:
 
 ```sh
 cp .env.example .env.local   # then set OPENAI_API_KEY
 ```
 
 `OPENAI_MODEL` defaults to `gpt-4o-mini`. The key stays server-side: the browser only ever calls `POST /api/chat`.
+
+### Enable the 3D satellite campus
+
+1. In Google Cloud, attach billing to the project and enable **Maps JavaScript API**.
+2. Create a browser API key. Restrict it to **HTTP referrers** (`http://localhost:3000/*` while developing, plus the production domain later) and restrict its API access to **Maps JavaScript API**.
+3. Copy `.env.example` to `.env.local` and add the key:
+
+```env
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_restricted_browser_key
+NEXT_PUBLIC_GOOGLE_MAP_ID=your_optional_3d_map_id
+```
+
+Restart `npm run dev` after changing environment variables. The Google key is expected to be visible in browser requests, so referrer and API restrictions are required. `.env.local` is ignored by Git and must never be committed.
+
+When configured, the map opens on a satellite globe, flies into MIT, renders all 32 model locations as risk-colored 3D markers, moves to a selected building, and falls back to the bundled map if Google fails to initialize.
+>>>>>>> origin/campus_map_working
 
 ```sh
 npm test
@@ -34,7 +50,7 @@ Development and build scripts use Next.js's supported Webpack option because Tur
 
 ## What is implemented
 
-- Campus map with real building footprints, street geometry, and the Charles River. Building pins show low, moderate, or high **modeled** exposure. Select or search for a building to inspect its details.
+- Optional Google photorealistic 3D satellite campus with an Earth-to-MIT camera flight and risk-colored 3D building markers. The bundled map with real building footprints, street geometry, and the Charles River remains the no-key and error fallback.
 - Timeline with days 0 through 21, playback, pause, reset, and speed selection. All displayed metrics, colors, and explanations follow the selected day.
 - Building details with the next-day exposure probability, modeled population compartments, and a calculation-based explanation.
 - Scenario lab with seven parameters from the existing model, presets, validation, and a preserved baseline.
@@ -49,14 +65,14 @@ Route planning, live alerts, student tracking, The Token Company, and Voloridge 
 
 Safara's [public dependency manifest](https://github.com/AdhyyanKumar/safara/blob/main/package.json) lists Next.js, React, TypeScript, Tailwind CSS, Google Maps React bindings, Three.js, React Three Fiber, and H3. Its repository was used to understand the stack and map-led component structure. No Safara source code or branding was copied.
 
-This implementation uses Next.js 16, React 19, TypeScript, Tailwind 4 with custom CSS, Lucide icons, and D3 geographic projection. It keeps the map and details-panel pattern but uses local OpenStreetMap geometry instead of Google Maps. There is no routing requirement, 3D scene, or hex-grid calculation in this version, so those extra libraries are not included.
+This implementation uses Next.js 16, React 19, TypeScript, Tailwind 4 with custom CSS, Lucide icons, D3 geographic projection for the offline map, and Google's official JavaScript API loader for the optional 3D satellite map. There is no routing requirement or hex-grid calculation in this version, so those extra libraries are not included.
 
 ## Source layout
 
 ```text
 src/app/                       Entry page, layout, design tokens, responsive CSS
 src/components/dashboard.tsx   Navigation, playback, scenarios, comparison, dialogs
-src/components/campus-map.tsx  Local SVG geography, markers, pan and zoom
+src/components/campus-map.tsx  Google 3D map, camera flight, markers, offline fallback
 src/components/trend-chart.tsx Comparison and timeline visualization
 src/components/location-detail.tsx
 src/components/chat-panel.tsx  "Ask the model" chat UI on the simulation page
