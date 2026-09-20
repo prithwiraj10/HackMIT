@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ChevronRight,
   HeartPulse,
+  HandHeart,
+  LockKeyhole,
   LogOut,
   MapPin,
   MessageCircle,
@@ -18,6 +20,7 @@ import {
   ShoppingBag,
   Trash2,
   Utensils,
+  UserRound,
   Volume2,
 } from "lucide-react";
 import { SYMPTOMS, type CheckIn } from "@/lib/support-data";
@@ -81,6 +84,24 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 
 const STORAGE_KEY = "freshman-flu-checkins";
 const SESSION_KEY = "freshman-flu-student-session";
+const DEMO_ACCOUNTS = [
+  {
+    name: "Student",
+    role: "Request food runs and manage your sick-day support plan.",
+    Icon: UserRound,
+  },
+  {
+    name: "Volunteer",
+    role: "Browse the food-run board and claim a neighbor's request.",
+    Icon: HandHeart,
+  },
+] as const;
+
+type DemoAccountName = (typeof DEMO_ACCOUNTS)[number]["name"];
+
+function isDemoAccount(value: string | null): value is DemoAccountName {
+  return DEMO_ACCOUNTS.some((account) => account.name === value);
+}
 
 function loadCheckIns(): CheckIn[] {
   try {
@@ -103,7 +124,8 @@ export function SupportWorkspace() {
   useEffect(() => {
     setCheckIns(loadCheckIns());
     setPosts(loadForumPosts());
-    setStudentName(localStorage.getItem(SESSION_KEY));
+    const savedAccount = localStorage.getItem(SESSION_KEY);
+    setStudentName(isDemoAccount(savedAccount) ? savedAccount : null);
   }, []);
 
   const navigate = (next: Tab) => {
@@ -129,9 +151,9 @@ export function SupportWorkspace() {
   const heading = HEADINGS[tab];
 
   if (studentName === null) {
-    return <StudentSignIn onSignIn={(name) => {
-      localStorage.setItem(SESSION_KEY, name);
-      setStudentName(name);
+    return <StudentSignIn onSignIn={(account) => {
+      localStorage.setItem(SESSION_KEY, account);
+      setStudentName(account);
     }} />;
   }
 
@@ -249,9 +271,100 @@ export function SupportWorkspace() {
   );
 }
 
-function StudentSignIn({ onSignIn }: { onSignIn: (name: string) => void }) {
-  const [name, setName] = useState("");
-  return <main className="app-shell support"><section className="panel sign-in-panel"><span className="eyebrow">STUDENT WORKSPACE</span><h1>Sign in for your support space</h1><p>Use a name to keep demo food-run requests, credits, and check-ins separate from another student.</p><label className="field-label" htmlFor="student-name">Your name</label><input id="student-name" className="text-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kira" /><button className="button primary" disabled={!name.trim()} onClick={() => onSignIn(name.trim().slice(0, 60))}>Sign in</button><p className="support-hint">Demo only — no password or real payment information.</p></section></main>;
+function StudentSignIn({
+  onSignIn,
+}: {
+  onSignIn: (account: DemoAccountName) => void;
+}) {
+  const [account, setAccount] = useState<DemoAccountName>("Student");
+  const [password, setPassword] = useState("demo");
+  const [error, setError] = useState("");
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password !== "demo") {
+      setError("Use the demo password shown below.");
+      return;
+    }
+    onSignIn(account);
+  };
+
+  return (
+    <main className="support sign-in-shell">
+      <section className="sign-in-card">
+        <div className="sign-in-brand">
+          <span className="brand-mark">
+            <Activity size={23} />
+          </span>
+          <span>
+            freshman<span className="brand-light">flu</span>
+            <small>STUDENT SUPPORT WORKSPACE</small>
+          </span>
+        </div>
+        <span className="eyebrow">WELCOME BACK</span>
+        <h1>Support for the days you can’t push through.</h1>
+        <p className="sign-in-intro">
+          Choose a demo account to keep food-run requests and mock credits
+          separate while you explore the student workspace.
+        </p>
+
+        <form onSubmit={submit}>
+          <fieldset className="account-picker">
+            <legend>Choose an account</legend>
+            <div className="account-options">
+              {DEMO_ACCOUNTS.map(({ name, role, Icon }) => (
+                <button
+                  key={name}
+                  type="button"
+                  className={
+                    account === name
+                      ? "account-option selected"
+                      : "account-option"
+                  }
+                  aria-pressed={account === name}
+                  onClick={() => {
+                    setAccount(name);
+                    setError("");
+                  }}
+                >
+                  <span className="account-icon"><Icon size={19} /></span>
+                  <span>
+                    <strong>{name}</strong>
+                    <small>{role}</small>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <label className="field-label" htmlFor="demo-password">
+            Password
+          </label>
+          <div className="password-input-wrap">
+            <LockKeyhole size={16} aria-hidden="true" />
+            <input
+              id="demo-password"
+              className="text-input"
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setError("");
+              }}
+              autoComplete="current-password"
+            />
+          </div>
+          {error && <p className="sign-in-error" role="alert">{error}</p>}
+          <button className="button primary sign-in-button" type="submit">
+            Enter {account} workspace <ArrowRight size={16} />
+          </button>
+        </form>
+        <p className="support-hint">
+          Demo accounts: <strong>Student / demo</strong> or{" "}
+          <strong>Volunteer / demo</strong>. No real account or payment data.
+        </p>
+      </section>
+    </main>
+  );
 }
 
 function Overview({
