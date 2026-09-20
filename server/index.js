@@ -59,9 +59,9 @@ app.post('/api/call', async(req,res)=>{
   if(!/^\+[1-9]\d{7,14}$/.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
   const safeText=String(text||'').slice(0,1600)
   if(!safeText.trim()) return res.status(400).json({error:'Add the message you want the call to speak.'})
-  try { const script=db.prepare('INSERT INTO call_scripts (text) VALUES (?)').run(safeText); const client=twilio(accountSid,authToken); const call=await client.calls.create({to,from,url:`${publicUrl}/api/twiml/${script.lastInsertRowid}`,method:'GET'}); res.json({ok:true,sid:call.sid}) }
+  try { const script=db.prepare('INSERT INTO call_scripts (text) VALUES (?)').run(safeText); const client=twilio(accountSid,authToken); const call=await client.calls.create({to,from,url:`${publicUrl}/api/twiml/${script.lastInsertRowid}`}); res.json({ok:true,sid:call.sid}) }
   catch(err){console.error('Twilio call failed', {status:err.status,code:err.code,message:err.message});res.status(400).json({error:err.message||'Twilio could not place the call.',code:err.code,status:err.status})}
 })
-app.get('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const spoken=script.text.replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${spoken}</Say></Response>`)})
+app.all('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const spoken=script.text.replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${spoken}</Say></Response>`)})
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','dist'); app.use(express.static(root)); app.get('*',(_,res)=>res.sendFile(path.join(root,'index.html')))
 app.listen(process.env.PORT||3001,()=>console.log('Freshman Flu running on http://localhost:3001'))
