@@ -34,3 +34,17 @@ export async function readBounded(
   }
   return out;
 }
+
+// Parses a JSON body under `limit` bytes. Returns `null` when the body is
+// malformed JSON; throws `BodyTooLarge` when it is oversized.
+export async function readJsonBounded(
+  request: Request,
+  limit: number,
+): Promise<unknown> {
+  const raw = await readBounded(request, limit);
+  try {
+    return JSON.parse(new TextDecoder().decode(raw));
+  } catch {
+    return null;
+  }
+}

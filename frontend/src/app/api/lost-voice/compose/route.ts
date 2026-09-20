@@ -1,8 +1,23 @@
+import { BodyTooLarge, readJsonBounded } from "@/lib/bounded-body";
+
+const MAX_BODY_BYTES = 16 * 1024;
+
 export async function POST(request: Request) {
   let body: { context?: unknown; caller?: unknown };
   try {
-    body = await request.json();
-  } catch {
+    const parsed = await readJsonBounded(request, MAX_BODY_BYTES);
+    if (!parsed || typeof parsed !== "object")
+      return Response.json(
+        { error: "Expected call context." },
+        { status: 400 },
+      );
+    body = parsed;
+  } catch (err) {
+    if (err instanceof BodyTooLarge)
+      return Response.json(
+        { error: "Call context is too large." },
+        { status: 413 },
+      );
     return Response.json({ error: "Expected call context." }, { status: 400 });
   }
   const context =

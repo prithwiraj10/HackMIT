@@ -2280,6 +2280,27 @@ td small {
   bottom: 65px;
   left: 19px;
 }
+.map-stage .map-compass {
+  z-index: 3;
+  right: auto;
+  top: 132px;
+  left: 24px;
+}
+.map-stage .map-controls {
+  z-index: 3;
+  right: auto;
+  left: 20px;
+  bottom: 25px;
+}
+.map-stage .google-map-error {
+  top: auto;
+  right: auto;
+  left: 20px;
+  bottom: 110px;
+}
+.map-stage:has(.location-glass) .map-attribution {
+  right: 370px;
+}
 .map-stage .map-legend {
   z-index: 3;
   right: auto;
@@ -2627,5 +2648,8 @@ td small {
   }
   .location-glass .location-detail {
     background: var(--surface);
+  }
+  .map-stage:has(.location-glass) .map-attribution {
+    right: 9px;
   }
 }

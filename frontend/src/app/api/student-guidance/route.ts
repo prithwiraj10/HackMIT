@@ -1,3 +1,8 @@
+import { BodyTooLarge, readJsonBounded } from "@/lib/bounded-body";
+
+const MAX_BODY_BYTES = 16 * 1024;
+const MAX_SYMPTOMS = 20;
+const MAX_SYMPTOM_LENGTH = 60;
 const fallback =
   "Rest, fluids, and low-effort meals can be reasonable supportive steps. If symptoms are severe, worsening, or making it hard to breathe, stay awake, or keep fluids down, contact campus health or urgent care. This is general support, not a diagnosis or medication instruction.";
 
@@ -9,12 +14,27 @@ export async function POST(request: Request) {
     energy?: unknown;
   };
   try {
-    body = await request.json();
-  } catch {
+    const parsed = await readJsonBounded(request, MAX_BODY_BYTES);
+    if (!parsed || typeof parsed !== "object")
+      return Response.json(
+        { error: "Expected check-in data." },
+        { status: 400 },
+      );
+    body = parsed;
+  } catch (err) {
+    if (err instanceof BodyTooLarge)
+      return Response.json(
+        { error: "Check-in data is too large." },
+        { status: 413 },
+      );
     return Response.json({ error: "Expected check-in data." }, { status: 400 });
   }
   const symptoms = Array.isArray(body.symptoms)
-    ? body.symptoms.filter((x): x is string => typeof x === "string").join(", ")
+    ? body.symptoms
+        .filter((x): x is string => typeof x === "string")
+        .slice(0, MAX_SYMPTOMS)
+        .map((x) => x.slice(0, MAX_SYMPTOM_LENGTH))
+        .join(", ")
     : "";
   const note = typeof body.note === "string" ? body.note.slice(0, 1000) : "";
   const severity =

@@ -1,7 +1,7 @@
 import { BodyTooLarge, readBounded } from "@/lib/bounded-body";
 
 const MAX_COURSES = 12;
-const MAX_ASSIGNMENTS = 40;
+const MAX_ASSIGNMENTS = 100; // Canvas import fetches at most per_page=100
 const MAX_SYLLABUS = 60_000; // matches what /api/academics/parse-pdf returns
 const MAX_DESCRIPTION = 2_000;
 const MAX_FIELD = 200;

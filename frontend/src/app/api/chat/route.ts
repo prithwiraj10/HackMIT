@@ -135,7 +135,7 @@ export async function POST(request: Request) {
   const sessionId =
     typeof payload.sessionId === "string" && payload.sessionId
       ? payload.sessionId.slice(0, 64)
-      : "default";
+      : crypto.randomUUID();
 
   const history = loadSession(sessionId);
   history.push({ role: "user", content: message.trim() });

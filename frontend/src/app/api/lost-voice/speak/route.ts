@@ -1,3 +1,6 @@
+import { BodyTooLarge, readJsonBounded } from "@/lib/bounded-body";
+
+const MAX_BODY_BYTES = 16 * 1024;
 const voices = new Set([
   "aura-2-andromeda-en",
   "aura-2-helena-en",
@@ -14,8 +17,16 @@ export async function POST(request: Request) {
     );
   let body: { text?: unknown; voice?: unknown };
   try {
-    body = await request.json();
-  } catch {
+    const parsed = await readJsonBounded(request, MAX_BODY_BYTES);
+    if (!parsed || typeof parsed !== "object")
+      return Response.json({ error: "Expected speech text." }, { status: 400 });
+    body = parsed;
+  } catch (err) {
+    if (err instanceof BodyTooLarge)
+      return Response.json(
+        { error: "Speech text is too large." },
+        { status: 413 },
+      );
     return Response.json({ error: "Expected speech text." }, { status: 400 });
   }
   const text =

@@ -303,7 +303,10 @@ export function Dashboard() {
                   <CampusMap
                     buildings={snapshot.buildings}
                     selected={selected}
-                    onSelect={setSelected}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      setShowLocationInsight(true);
+                    }}
                     resetKey={mapResetKey}
                   />
                   <div className="map-search-glass">
@@ -500,6 +503,7 @@ export function Dashboard() {
                     key={b.id}
                     onClick={() => {
                       setSelected(b.id);
+                      setShowLocationInsight(true);
                       document.querySelector(".explorer")?.scrollIntoView({
                         behavior: "smooth",
                         block: "nearest",
@@ -558,7 +562,6 @@ export function Dashboard() {
       </main>
       <ChatPanel />
       {sources && <Sources onClose={() => setSources(false)} />}
-      <ChatPanel />
     </div>
   );
 }
