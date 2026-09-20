@@ -64,7 +64,7 @@ const E164=/^\+[1-9]\d{7,14}$/
 const PRIVATE_V4=/^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/
 const isLocalHost=hostname=>{
   const host=hostname.toLowerCase().replace(/^\[|\]$/g,'')
-  if(host==='localhost'||host.endsWith('.local')) return true
+  if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')) return true
   if(!host.includes(':')) return PRIVATE_V4.test(host)
   if(host==='::'||host==='::1'||/^(f[cd]|fe[89ab])/.test(host)) return true
   const dotted=host.match(/^::(?:ffff:)?((?:\d{1,3}\.){3}\d{1,3})$/)
@@ -97,7 +97,7 @@ app.post('/api/vapi/call', async(req,res)=>{
   const context=String(text||'').slice(0,1600).trim()
   if(!context) return res.status(400).json({error:'Add what the voice agent should know before the call.'})
   const prompt=`You are Freshman Flu Voice Coach, a concise call assistant for a sick MIT student who may have a weak or lost voice. Help them communicate with campus health, a doctor's office, student services, a roommate, or a professor. Ask one question at a time. Keep spoken responses short. Do not diagnose, prescribe medication, give dosage, or claim to be a clinician. For urgent symptoms, advise contacting MIT Medical or emergency services. Student context: ${context}`
-  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
+  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId,assistantOverrides:{variableValues:{studentContext:context}}}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
   try{const r=await fetch('https://api.vapi.ai/call',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.message||d.error||'Vapi could not place the call.',details:d});res.json({ok:true,id:d.id,status:d.status})}
   catch(err){res.status(500).json({error:err.message||'Vapi call failed.'})}
 })
