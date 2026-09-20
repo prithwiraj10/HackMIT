@@ -61,7 +61,7 @@ app.post('/api/academics/plan', async(req,res)=>{
 })
 const env = key => (process.env[key] || '').trim()
 const E164=/^\+[1-9]\d{7,14}$/
-const PRIVATE_V4=/^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/
+const PRIVATE_V4=/^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|(22[4-9]|2[345]\d)\.)/
 const isLocalHost=hostname=>{
   const host=hostname.toLowerCase().replace(/^\[|\]$/g,'')
   if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')) return true
