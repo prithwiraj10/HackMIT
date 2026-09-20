@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, GraduationCap, ShieldCheck } from "lucide-react";
+import { ArrowRight, Activity } from "lucide-react";
 import "./landing.css";
 
 const STATS = [
@@ -14,45 +14,82 @@ export default function Page() {
     <div className="landing">
       <nav className="landing-nav" aria-label="Choose an audience">
         <span className="landing-brand">
-          <span className="landing-dot" />
+          <span className="landing-mark">
+            <Activity size={19} strokeWidth={2.6} />
+          </span>
           <span>
-            freshman<em>flu</em>
+            Freshman<em>Flu</em>
           </span>
         </span>
         <div className="landing-switch">
           <a href="#students">Students</a>
           <a href="#admin">Admin</a>
+          <Link href="/simulation">Simulation</Link>
         </div>
       </nav>
 
       <header className="landing-hero">
-        <Image
-          src="/landing/hero.jpg"
-          alt="MIT campus and the Charles River at sunset"
-          fill
-          priority
-          sizes="100vw"
-        />
+        <svg
+          className="hero-trail"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M-40 210 C 180 120, 300 330, 520 300 S 900 120, 1180 220 1480 160 1480 160"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeDasharray="12 12"
+          />
+          <path
+            d="M-40 720 C 220 700, 300 520, 560 560 S 980 800, 1240 700 1480 620 1480 620"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeDasharray="12 12"
+          />
+        </svg>
+
         <div className="hero-copy">
           <h1>
-            The flu moves fast.
-            <br />
-            <span>Move first.</span>
+            Outrun the outbreak
+            <span className="caret" />
           </h1>
           <p>
-            A live 21-day simulation of how illness spreads between the dorms,
-            labs and dining halls of MIT — built on real walking distances
-            between all 32 campus locations.
+            We simulate 21 days of flu across MIT so you can see it coming
+            before it reaches you.
           </p>
           <div className="hero-actions">
             <a className="solid" href="#students">
               I&apos;m a student <ArrowRight size={17} />
             </a>
             <a className="ghost" href="#admin">
-              I&apos;m an administrator <ArrowRight size={17} />
+              I&apos;m an administrator
             </a>
           </div>
         </div>
+
+        <div className="hero-cards">
+          <figure className="card-back">
+            <Image
+              src="/landing/students.jpg"
+              alt="Students crossing campus between classes"
+              width={1024}
+              height={1024}
+            />
+          </figure>
+          <figure className="card-front">
+            <Image
+              src="/landing/hero.jpg"
+              alt="MIT campus and the Charles River at sunset"
+              width={1536}
+              height={1024}
+              priority
+            />
+          </figure>
+        </div>
+
         <div className="hero-stats">
           {STATS.map((s) => (
             <div key={s.label}>
@@ -64,36 +101,14 @@ export default function Page() {
       </header>
 
       <section className="landing-section students" id="students">
-        <figure>
-          <Image
-            src="/landing/students.jpg"
-            alt="Students crossing campus between classes"
-            width={1024}
-            height={1024}
-          />
-        </figure>
         <div className="section-copy">
-          <span className="eyebrow">
-            <GraduationCap size={14} /> FOR STUDENTS
-          </span>
+          <span className="eyebrow">FOR STUDENTS</span>
           <h2>Know your campus before it knows you.</h2>
           <p>
             See how an outbreak moves through the places you actually spend your
             day — your dorm, your lecture hall, the dining hall you always end
             up in at 7pm.
           </p>
-          <ul className="section-points">
-            <li>
-              <Check size={17} /> Risk for every building you visit, day by day
-            </li>
-            <li>
-              <Check size={17} /> Watch 21 days of spread play out from one
-              first case
-            </li>
-            <li>
-              <Check size={17} /> Find the quiet hours and the crowded ones
-            </li>
-          </ul>
           <Link className="landing-cta" href="/students">
             Open the student view <ArrowRight size={17} />
           </Link>
@@ -101,35 +116,13 @@ export default function Page() {
       </section>
 
       <section className="landing-section admin" id="admin">
-        <figure>
-          <Image
-            src="/landing/admin.jpg"
-            alt="Aerial view of campus buildings linked by a network"
-            width={1024}
-            height={1024}
-          />
-        </figure>
         <div className="section-copy">
-          <span className="eyebrow">
-            <ShieldCheck size={14} /> FOR ADMINISTRATORS
-          </span>
+          <span className="eyebrow">FOR ADMINISTRATORS</span>
           <h2>Plan the response before the first case.</h2>
           <p>
             Model isolation policies, transmission rates and cross-campus mixing
             across all 32 locations, then compare the outcomes side by side.
           </p>
-          <ul className="section-points">
-            <li>
-              <Check size={17} /> Tune seven parameters and rerun instantly
-            </li>
-            <li>
-              <Check size={17} /> Compare two scenarios on peak load and total
-              exposure
-            </li>
-            <li>
-              <Check size={17} /> Rank the hotspots that need staff first
-            </li>
-          </ul>
           <Link className="landing-cta" href="/admin">
             Sign in to the admin view <ArrowRight size={17} />
           </Link>
