@@ -1,6 +1,6 @@
 # MIT campus for Patient Zero: what each building does
 
-Status: **coordinates and distances are estimates (about +/-100 m), not routed.** Building numbers, names and functions are from public MIT information; rows marked `medium` in `function_confidence` should be checked against whereis.mit.edu or MIT Dining before you rely on them.
+Status: **building coordinates are OpenStreetMap footprint centroids (`coords_status` = `osm_footprint_centroid`, via `tools/snap_coordinates.py`); open spaces and off-campus areas are still estimates (about +/-100 m). Distances are haversine x1.25, not routed.** Building numbers, names and functions are from public MIT information; rows marked `medium` in `function_confidence` should be checked against whereis.mit.edu or MIT Dining before you rely on them.
 
 Freshman-eligible undergraduate dorms only; graduate housing and fraternity/sorority houses are not modeled individually.
 
