@@ -102,10 +102,12 @@ function StaticCampusMap({
   buildings,
   selected,
   onSelect,
+  resetKey,
 }: {
   buildings: BuildingState[];
   selected: string;
   onSelect: (id: string) => void;
+  resetKey: number;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 850, height: 550 });
@@ -128,6 +130,9 @@ function StaticCampusMap({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+  useEffect(() => {
+    setView({ zoom: 0.8, x: 0, y: 0 });
+  }, [resetKey]);
   const projection = useMemo(
     () =>
       geoMercator().fitExtent(
@@ -265,10 +270,6 @@ function StaticCampusMap({
           </button>
         );
       })}
-      <div className="map-corner-label">
-        <span className="eyebrow">CAMBRIDGE, MASSACHUSETTS</span>
-        <span>Massachusetts Institute of Technology</span>
-      </div>
       <div className="map-compass">
         <Navigation size={15} fill="currentColor" />
         <span>N</span>
@@ -324,11 +325,13 @@ function GoogleCampusMap({
   buildings,
   selected,
   onSelect,
+  resetKey,
   apiKey,
 }: {
   buildings: BuildingState[];
   selected: string;
   onSelect: (id: string) => void;
+  resetKey: number;
   apiKey: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
@@ -472,6 +475,30 @@ function GoogleCampusMap({
     });
   }, [buildings, context, enteredCampus, selected]);
 
+  useEffect(() => {
+    if (!context || resetKey === 0) return;
+    const { map } = context;
+    setEnteredCampus(false);
+    map.flyCameraTo({
+      endCamera: {
+        center: { lat: 30, lng: -35, altitude: 0 },
+        range: 18_000_000,
+        tilt: 0,
+        heading: 0,
+        roll: 0,
+      },
+      durationMillis: 1500,
+    });
+    const flyBack = () => {
+      flyToCampus(map, 2400);
+      map.addEventListener("gmp-animationend", () => setEnteredCampus(true), {
+        once: true,
+      });
+    };
+    map.addEventListener("gmp-animationend", flyBack, { once: true });
+    return () => map.removeEventListener("gmp-animationend", flyBack);
+  }, [context, flyToCampus, resetKey]);
+
   if (error) {
     return (
       <div className="map-fallback-shell">
@@ -479,6 +506,7 @@ function GoogleCampusMap({
           buildings={buildings}
           selected={selected}
           onSelect={onSelect}
+          resetKey={resetKey}
         />
         <div className="google-map-error" role="status">
           <strong>Showing the offline campus map</strong>
@@ -501,10 +529,6 @@ function GoogleCampusMap({
           <span>Preparing satellite imagery and simulation markers</span>
         </div>
       )}
-      <div className="map-corner-label google-map-label">
-        <span className="eyebrow">3D CAMPUS VIEW</span>
-        <span>Massachusetts Institute of Technology</span>
-      </div>
       <div className="map-legend google-map-legend">
         <span>Simulated exposure</span>
         <i className="low" />
@@ -514,23 +538,6 @@ function GoogleCampusMap({
         <i className="high" />
         High
       </div>
-      {context && (
-        <button
-          className="google-map-reset"
-          type="button"
-          onClick={() => {
-            setEnteredCampus(false);
-            flyToCampus(context.map, 1600);
-            const finish = () => setEnteredCampus(true);
-            context.map.addEventListener("gmp-animationend", finish, {
-              once: true,
-            });
-          }}
-        >
-          <Scan size={15} />
-          Fly to MIT
-        </button>
-      )}
     </div>
   );
 }
@@ -539,6 +546,7 @@ export function CampusMap(props: {
   buildings: BuildingState[];
   selected: string;
   onSelect: (id: string) => void;
+  resetKey: number;
 }) {
   if (!GOOGLE_MAPS_KEY) return <StaticCampusMap {...props} />;
   return <GoogleCampusMap {...props} apiKey={GOOGLE_MAPS_KEY} />;

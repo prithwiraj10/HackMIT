@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, SendHorizontal, X } from "lucide-react";
+import { MessageCircle, SendHorizontal, Sparkles, X } from "lucide-react";
 import "./chat.css";
 
 type ToolCallRecord = {
@@ -9,20 +9,20 @@ type ToolCallRecord = {
   arguments: Record<string, unknown>;
   result: unknown;
 };
+
 type ChatMessage =
   | { role: "user"; content: string }
   | { role: "assistant"; content: string; calls?: ToolCallRecord[] };
 
 const SUGGESTIONS = [
-  "Where are all the hotspots for infection?",
-  "Where should I install hand sanitizer stations?",
-  "When should I put out a mask mandate?",
-  "How do I curb infection in Maseeh Hall?",
+  "Which buildings have the highest modeled exposure?",
+  "What changes most between day 7 and day 14?",
+  "Explain how this simulation estimates exposure.",
 ];
 
 function preview(result: unknown) {
-  const text = JSON.stringify(result);
-  return text.length > 400 ? `${text.slice(0, 400)}…` : text;
+  const value = JSON.stringify(result);
+  return value.length > 400 ? `${value.slice(0, 400)}…` : value;
 }
 
 export function ChatPanel() {
@@ -46,37 +46,31 @@ export function ChatPanel() {
     if (!message || pending) return;
     setInput("");
     setPending(true);
-    setMessages((m) => [...m, { role: "user", content: message }]);
+    setMessages((current) => [...current, { role: "user", content: message }]);
+
     try {
-      const res = await fetch("/api/chat", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ message, sessionId: sessionId.current }),
       });
-      const body = await res.json().catch(() => null);
-      if (!res.ok) {
-        setMessages((m) => [
-          ...m,
-          {
-            role: "assistant",
-            content:
-              body?.error ??
-              `The chat endpoint returned an error (${res.status}).`,
-          },
-        ]);
-      } else {
-        setMessages((m) => [
-          ...m,
-          { role: "assistant", content: body.reply, calls: body.toolCalls },
-        ]);
-      }
-    } catch {
-      setMessages((m) => [
-        ...m,
+      const body = await response.json().catch(() => null);
+      setMessages((current) => [
+        ...current,
         {
           role: "assistant",
-          content:
-            "Could not reach the chat endpoint. Is the dev server running?",
+          content: response.ok
+            ? body.reply
+            : (body?.error ?? "Fluency could not complete that request."),
+          calls: response.ok ? body.toolCalls : undefined,
+        },
+      ]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: "Fluency cannot reach the model service right now.",
         },
       ]);
     } finally {
@@ -88,22 +82,32 @@ export function ChatPanel() {
     <>
       <button
         className="chat-launcher"
-        aria-label={open ? "Close the model assistant" : "Ask the model"}
+        type="button"
+        aria-label={open ? "Close Fluency" : "Ask Fluency"}
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => setOpen((visible) => !visible)}
       >
-        {open ? <X size={18} /> : <MessageCircle size={18} />}
-        <span>Ask the model</span>
+        {open ? <X size={17} /> : <MessageCircle size={17} />}
+        <span>{open ? "Close" : "Ask Fluency"}</span>
       </button>
       {open && (
-        <section className="chat-panel" aria-label="Simulation assistant">
+        <section
+          className="chat-panel"
+          aria-label="Fluency simulation assistant"
+        >
           <header className="chat-header">
-            <div>
-              <strong>Ask the model</strong>
-              <span>Answers grounded in live simulation runs</span>
-            </div>
+            <span className="chat-identity">
+              <i>
+                <Sparkles size={15} />
+              </i>
+              <span>
+                <strong>Fluency</strong>
+                <small>Freshman Flu simulation guide</small>
+              </span>
+            </span>
             <button
-              aria-label="Close"
+              type="button"
+              aria-label="Close Fluency"
               className="chat-close"
               onClick={() => setOpen(false)}
             >
@@ -113,37 +117,38 @@ export function ChatPanel() {
           <div className="chat-scroll" ref={scrollRef}>
             {messages.length === 0 && (
               <div className="chat-empty">
+                <span className="eyebrow">ASK ABOUT THIS RUN</span>
                 <p>
-                  Ask about hotspots, interventions, or timing. Every answer is
-                  computed from the model — not guessed.
+                  Explore hotspots, timing, and model assumptions without
+                  leaving the campus view.
                 </p>
-                {SUGGESTIONS.map((s) => (
-                  <button key={s} onClick={() => send(s)}>
-                    {s}
+                {SUGGESTIONS.map((suggestion) => (
+                  <button key={suggestion} onClick={() => send(suggestion)}>
+                    {suggestion}
                   </button>
                 ))}
               </div>
             )}
-            {messages.map((m, i) =>
-              m.role === "user" ? (
-                <p key={i} className="chat-message user">
-                  {m.content}
+            {messages.map((message, index) =>
+              message.role === "user" ? (
+                <p key={index} className="chat-message user">
+                  {message.content}
                 </p>
               ) : (
-                <div key={i} className="chat-message assistant">
-                  <p>{m.content}</p>
-                  {!!m.calls?.length && (
+                <div key={index} className="chat-message assistant">
+                  <p>{message.content}</p>
+                  {!!message.calls?.length && (
                     <details className="chat-tools">
                       <summary>
-                        Grounded by {m.calls.length} tool{" "}
-                        {m.calls.length === 1 ? "call" : "calls"}
+                        Grounded by {message.calls.length} model tool
+                        {message.calls.length === 1 ? "" : "s"}
                       </summary>
-                      {m.calls.map((c, j) => (
-                        <div key={j} className="chat-tool">
+                      {message.calls.map((call, callIndex) => (
+                        <div key={callIndex} className="chat-tool">
                           <code>
-                            {c.name}({JSON.stringify(c.arguments)})
+                            {call.name}({JSON.stringify(call.arguments)})
                           </code>
-                          <pre>{preview(c.result)}</pre>
+                          <pre>{preview(call.result)}</pre>
                         </div>
                       ))}
                     </details>
@@ -151,20 +156,20 @@ export function ChatPanel() {
                 </div>
               ),
             )}
-            {pending && <p className="chat-typing">Running tools…</p>}
+            {pending && <p className="chat-typing">Reading the simulation…</p>}
           </div>
           <form
             className="chat-input"
-            onSubmit={(e) => {
-              e.preventDefault();
+            onSubmit={(event) => {
+              event.preventDefault();
               send(input);
             }}
           >
             <input
-              aria-label="Ask a question about the simulation"
+              aria-label="Ask Fluency a question"
               placeholder="Ask about the simulation…"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(event) => setInput(event.target.value)}
               disabled={pending}
             />
             <button
