@@ -51,6 +51,14 @@ async def make_call(request: Request) -> Response:
         return JSONResponse({"error": str(exc)}, status_code=400)
     except Exception as exc:
         logger.exception("Could not place call")
+        if "trial accounts have limited parameter access" in str(exc):
+            return JSONResponse(
+                {
+                    "error": "Twilio Trial blocks the live audio stream required for a Deepgram call agent. This feature will work after upgrading Twilio; use Phone-call proxy for the trial-safe live workaround.",
+                    "code": "twilio_trial_stream_blocked",
+                },
+                status_code=402,
+            )
         return JSONResponse({"error": f"Twilio could not place this call: {exc}"}, status_code=502)
     context["call_sid"] = call_sid
     pending_contexts[call_sid] = context
