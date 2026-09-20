@@ -25,8 +25,8 @@ export default function Page() {
           </span>
         </Link>
         <div className="landing-switch">
-          <a href="#students">Students</a>
-          <a href="#admin">Admin</a>
+          <a href="#students">Campus simulation</a>
+          <a href="#admin">Student support</a>
           <ThemeToggle className="landing-theme" />
         </div>
       </nav>
@@ -42,20 +42,21 @@ export default function Page() {
             up in at 7pm.
           </p>
           <Link className="landing-cta" href="/students">
-            Open the student view <ArrowRight size={17} />
+            Open the campus simulation <ArrowRight size={17} />
           </Link>
         </div>
       </section>
 
       <section className="landing-section admin" id="admin">
         <div className="section-copy">
-          <h2>Plan the response before the first case.</h2>
+          <h2>Sick day? Here&apos;s what to do next.</h2>
           <p>
-            Model isolation policies, transmission rates and cross-campus mixing
-            across all 32 locations, then compare the outcomes side by side.
+            Food that matches your energy, policy-grounded triage for every
+            class, a voice when yours is gone, daily check-ins and a forum of
+            students who get it.
           </p>
           <Link className="landing-cta" href="/admin">
-            Open the admin view <ArrowRight size={17} />
+            Open student support <ArrowRight size={17} />
           </Link>
         </div>
       </section>

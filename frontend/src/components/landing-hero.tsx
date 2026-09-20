@@ -108,10 +108,10 @@ export function LandingHero() {
         </p>
         <div className="hero-actions">
           <a className="solid" href="#students">
-            I&apos;m a student <ArrowRight size={17} />
+            Campus simulation <ArrowRight size={17} />
           </a>
           <a className="ghost" href="#admin">
-            I&apos;m an administrator
+            Student support
           </a>
         </div>
       </div>
