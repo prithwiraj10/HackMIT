@@ -93,9 +93,15 @@ export function AcademicTriage() {
     }
   };
 
+  const ready = courses.some(
+    (c) => c.course.trim() && (c.syllabus.trim() || c.assignments.length),
+  );
+
   const run = async () => {
-    if (!courses.length) {
-      setStatus("Import Canvas or add a course first.");
+    if (!ready) {
+      setStatus(
+        "Add a course with a name and a syllabus (or Canvas assignments) first.",
+      );
       return;
     }
     setBusy(true);
@@ -248,6 +254,7 @@ export function AcademicTriage() {
             id={`course-syllabus-${c.id}`}
             className="text-input"
             rows={6}
+            maxLength={60000}
             value={c.syllabus}
             onChange={(e) => update(i, { syllabus: e.target.value })}
             placeholder="Paste attendance, makeup, and late-work policies here."
@@ -289,7 +296,7 @@ export function AcademicTriage() {
         </div>
         <button
           className="button primary"
-          disabled={busy || !courses.length}
+          disabled={busy || !ready}
           onClick={run}
         >
           {busy ? "Building plan…" : "Build AI class triage"}

@@ -1,11 +1,17 @@
+import { BodyTooLarge, readBounded } from "@/lib/bounded-body";
+
 const MAX_COURSES = 12;
 const MAX_ASSIGNMENTS = 40;
-const MAX_SYLLABUS = 20_000;
+const MAX_SYLLABUS = 60_000; // matches what /api/academics/parse-pdf returns
+const MAX_DESCRIPTION = 2_000;
 const MAX_FIELD = 200;
-const MAX_PAYLOAD = 250_000;
+const MAX_PAYLOAD = 400_000;
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
 const text = (value: unknown, max: number) =>
   typeof value === "string" ? value.slice(0, max) : "";
+const number = (value: unknown) =>
+  typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
 function boundCourse(raw: unknown) {
   if (!raw || typeof raw !== "object") return null;
@@ -24,6 +30,8 @@ function boundCourse(raw: unknown) {
         return {
           name: text(item.name, MAX_FIELD),
           dueAt: text(item.dueAt, MAX_FIELD),
+          points: number(item.points),
+          description: text(item.description, MAX_DESCRIPTION),
         };
       }),
   };
@@ -32,8 +40,15 @@ function boundCourse(raw: unknown) {
 export async function POST(request: Request) {
   let body: { courses?: unknown; illness?: unknown; name?: unknown };
   try {
-    body = await request.json();
-  } catch {
+    const raw = await readBounded(request, MAX_BODY_BYTES);
+    body = JSON.parse(new TextDecoder().decode(raw));
+    if (!body || typeof body !== "object") throw new Error();
+  } catch (error) {
+    if (error instanceof BodyTooLarge)
+      return Response.json(
+        { error: "Course data is too large. Shorten the syllabus text." },
+        { status: 413 },
+      );
     return Response.json({ error: "Expected course data." }, { status: 400 });
   }
   if (!Array.isArray(body.courses) || !body.courses.length)
@@ -47,6 +62,11 @@ export async function POST(request: Request) {
       { status: 413 },
     );
   const courses = body.courses.map(boundCourse).filter((c) => c !== null);
+  if (!courses.length)
+    return Response.json(
+      { error: "Add at least one valid course." },
+      { status: 400 },
+    );
   if (!process.env.OPENAI_API_KEY)
     return Response.json(
       { error: "Set OPENAI_API_KEY to build an AI triage plan." },
