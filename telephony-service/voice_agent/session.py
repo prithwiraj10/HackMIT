@@ -125,30 +125,18 @@ class VoiceAgentSession:
     # ------------------------------------------------------------------
 
     async def start(self):
-        """Wait for AMD result, then either start the voice agent or deliver voicemail."""
-        logger.info(f"[SESSION:{self.call_sid}] Waiting for AMD result...")
+        """Start the Voice Agent immediately (Twilio Trial-compatible mode)."""
+        logger.info(f"[SESSION:{self.call_sid}] Starting without AMD...")
 
         # Start the Twilio audio loop — it begins in "buffering" mode and
         # runs for the entire lifetime of the Twilio WebSocket.  We never
         # cancel this task; we change self._audio_mode to control behavior.
         self._audio_task = asyncio.create_task(self._twilio_audio_loop())
 
-        # Wait for AMD result (typically 2-4 seconds)
-        try:
-            await asyncio.wait_for(self._amd_result.wait(), timeout=20.0)
-        except asyncio.TimeoutError:
-            # No AMD result received - treat as human (safe default)
-            logger.warning(f"[SESSION:{self.call_sid}] AMD timeout - treating as human")
-            self._amd_answered_by = "unknown"
-
-        if self._is_voicemail():
-            # Voicemail path - deliver TTS message, no Voice Agent API needed
-            logger.info(f"[SESSION:{self.call_sid}] Voicemail detected - delivering message")
-            await self._deliver_voicemail()
-            return
-
-        # Human path - connect to Deepgram Voice Agent API
-        logger.info(f"[SESSION:{self.call_sid}] Human detected - starting voice agent")
+        # Trial accounts can reject asynchronous answering-machine detection.
+        # Treat every answer as a person so the live conversation begins at once.
+        self._amd_answered_by = "unknown"
+        logger.info(f"[SESSION:{self.call_sid}] Starting Deepgram Voice Agent")
         await self._connect_deepgram()
 
     async def _connect_deepgram(self):
