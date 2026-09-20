@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   CircleHelp,
-  Download,
   FileJson,
   FlaskConical,
   FolderOpen,
@@ -27,9 +26,12 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { CampusMap } from "./campus-map";
 import { TrendChart } from "./trend-chart";
 import { LocationDetail } from "./location-detail";
+import { ChatPanel } from "./chat-panel";
+import { ThemeToggle } from "./theme-toggle";
 import {
   BASELINE,
   BUILDINGS,
@@ -57,8 +59,10 @@ export function Dashboard() {
   const [day, setDay] = useState(7);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
-  const [selected, setSelected] = useState("building-5");
+  const [selected, setSelected] = useState(BUILDINGS[0].id);
   const [query, setQuery] = useState("");
+  const [showLocationInsight, setShowLocationInsight] = useState(false);
+  const [mapResetKey, setMapResetKey] = useState(0);
   const [comparison, setComparison] = useState<Scenario | null>(null);
   const [active, setActive] = useState("baseline");
   const [sources, setSources] = useState(false);
@@ -91,48 +95,26 @@ export function Dashboard() {
     setView(next);
     setNotice("");
   };
-  const exportRun = () => {
-    const url = URL.createObjectURL(
-      new Blob(
-        [
-          JSON.stringify(
-            { synthetic: true, model: "Deterministic SEITR", ...current },
-            null,
-            2,
-          ),
-        ],
-        { type: "application/json" },
-      ),
-    );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "freshman-flu-scenario.json";
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setNotice("Scenario exported as JSON.");
-  };
+  const matches = BUILDINGS.filter((candidate) =>
+    `${candidate.name} ${candidate.code} ${candidate.type}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
   return (
-    <div className="app-shell">
+    <div className="app-shell sim">
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
       <header className="app-header">
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("simulation");
-          }}
-        >
+        <Link className="brand" href="/">
           <span className="brand-mark">
             <Activity size={22} />
           </span>
           <span>
-            freshman<span className="brand-light">flu</span>
+            Flu<span className="brand-light">U</span>
             <small>CAMPUS SIMULATION LAB</small>
           </span>
-        </a>
+        </Link>
         <div className="header-context">
           <span className="divider" />
           <MapPin size={15} />
@@ -202,19 +184,6 @@ export function Dashboard() {
           </dl>
         </div>
         <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <FlaskConical size={18} />
-            <p>
-              A little curiosity.
-              <br />A lot of what-ifs.
-            </p>
-            <span>
-              Explore how an outbreak changes under different assumptions.
-            </span>
-            <button onClick={() => navigate("scenarios")}>
-              Try a scenario <ArrowRight size={14} />
-            </button>
-          </div>
           <button className="method-link" onClick={() => navigate("method")}>
             <CircleHelp size={16} /> About this simulation
           </button>
@@ -250,7 +219,7 @@ export function Dashboard() {
             </p>
           </div>
           <div className="heading-actions">
-            {view === "simulation" && (
+            {view === "simulation" && comparison && (
               <label className="scenario-select">
                 <Layers3 size={15} />
                 <select
@@ -262,16 +231,11 @@ export function Dashboard() {
                   }}
                 >
                   <option value="baseline">Baseline scenario</option>
-                  {comparison && (
-                    <option value="comparison">{comparison.name}</option>
-                  )}
+                  <option value="comparison">{comparison.name}</option>
                 </select>
               </label>
             )}
-            <button className="button" onClick={exportRun}>
-              <Download size={15} />
-              <span>Export run</span>
-            </button>
+            <ThemeToggle />
           </div>
         </div>
         <div className="status-message" role="status">
@@ -308,50 +272,113 @@ export function Dashboard() {
                     <strong>Campus overview</strong>
                     <span>{BUILDINGS.length} locations</span>
                   </div>
-                  <div className="search-box">
-                    <Search size={15} />
-                    <input
-                      aria-label="Find a building"
-                      placeholder="Find a building…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                    {query && (
-                      <button
-                        aria-label="Clear building search"
-                        onClick={() => setQuery("")}
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                    {query && (
-                      <div className="search-results">
-                        {BUILDINGS.filter((b) =>
-                          b.name.toLowerCase().includes(query.toLowerCase()),
-                        ).map((b) => (
+                  <button
+                    className="map-reset-button"
+                    type="button"
+                    onClick={() => setMapResetKey((key) => key + 1)}
+                  >
+                    <RotateCcw size={14} />
+                    Reset view
+                  </button>
+                </div>
+                <div className="map-stage">
+                  <CampusMap
+                    buildings={snapshot.buildings}
+                    selected={selected}
+                    onSelect={(id) => {
+                      setSelected(id);
+                      setShowLocationInsight(true);
+                    }}
+                    resetKey={mapResetKey}
+                  />
+                  <div className="map-search-glass">
+                    <span className="eyebrow">EXPLORE THE CAMPUS</span>
+                    <label className="search-box">
+                      <Search size={16} />
+                      <input
+                        aria-label="Find a building"
+                        placeholder="Find a building…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                      />
+                      {query && (
+                        <button
+                          type="button"
+                          aria-label="Clear building search"
+                          onClick={() => setQuery("")}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </label>
+                  </div>
+                  {query.trim() && (
+                    <div className="search-results" role="listbox">
+                      <div className="search-results-heading">
+                        <span>BUILDING RESULTS</span>
+                        <small>{matches.length} found</small>
+                      </div>
+                      {matches.slice(0, 6).map((candidate) => {
+                        const state = snapshot.buildings.find(
+                          (item) => item.id === candidate.id,
+                        );
+                        return (
                           <button
-                            key={b.id}
+                            key={candidate.id}
+                            type="button"
+                            role="option"
+                            aria-selected={selected === candidate.id}
                             onClick={() => {
-                              setSelected(b.id);
+                              setSelected(candidate.id);
                               setQuery("");
+                              setShowLocationInsight(true);
                             }}
                           >
-                            <MapPin size={14} />
-                            {b.name}
+                            <span className="result-icon">
+                              <MapPin size={14} />
+                            </span>
+                            <span>
+                              <strong>{candidate.name}</strong>
+                              <small>
+                                {candidate.code} ·{" "}
+                                {candidate.type.replace(/_/g, " ")}
+                              </small>
+                            </span>
+                            {state && (
+                              <span
+                                className={`risk-badge ${risk(state.exposureRate).className}`}
+                              >
+                                {formatRate(state.exposureRate)}
+                              </span>
+                            )}
                           </button>
-                        ))}
-                        {!BUILDINGS.some((b) =>
-                          b.name.toLowerCase().includes(query.toLowerCase()),
-                        ) && <span>No matching buildings</span>}
-                      </div>
-                    )}
-                  </div>
+                        );
+                      })}
+                      {matches.length === 0 && (
+                        <span className="empty-result">
+                          No matching buildings
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {showLocationInsight && (
+                    <div className="location-glass">
+                      <button
+                        className="location-glass-close"
+                        type="button"
+                        aria-label="Close location insight"
+                        onClick={() => setShowLocationInsight(false)}
+                      >
+                        <X size={15} />
+                      </button>
+                      <LocationDetail
+                        building={building}
+                        day={day}
+                        onMethod={() => navigate("method")}
+                      />
+                    </div>
+                  )}
                 </div>
-                <CampusMap
-                  buildings={snapshot.buildings}
-                  selected={selected}
-                  onSelect={setSelected}
-                />
                 <div className="timeline">
                   <div className="timeline-top">
                     <div className="timeline-day">
@@ -430,11 +457,6 @@ export function Dashboard() {
                   </div>
                 </div>
               </div>
-              <LocationDetail
-                building={building}
-                day={day}
-                onMethod={() => navigate("method")}
-              />
             </section>
             <div className="overview-bottom">
               <section className="panel">
@@ -463,6 +485,7 @@ export function Dashboard() {
                     key={b.id}
                     onClick={() => {
                       setSelected(b.id);
+                      setShowLocationInsight(true);
                       document.querySelector(".explorer")?.scrollIntoView({
                         behavior: "smooth",
                         block: "nearest",
@@ -519,6 +542,7 @@ export function Dashboard() {
           <span>Public MIT geography · Uncalibrated research prototype</span>
         </footer>
       </main>
+      <ChatPanel />
       {sources && <Sources onClose={() => setSources(false)} />}
     </div>
   );
@@ -955,8 +979,9 @@ function Method() {
         </h2>
         <p>
           This frontend runs the SEITR equations already in your team’s
-          repository. It maps 14 fictional building cohorts onto public MIT
-          geography and keeps each day available for replay.
+          repository. It maps {BUILDINGS.length} MIT building cohorts with
+          sample student sizes onto public MIT geography and keeps each day
+          available for replay.
         </p>
       </section>
       <div className="method-grid">
@@ -969,8 +994,8 @@ function Method() {
           },
           {
             n: "02",
-            title: "Synthetic building cohorts",
-            content: `The existing sample defines ${formatCount(POPULATION)} modeled people across ${BUILDINGS.length} locations. These are fictional cohorts, not enrollment, visits, or live occupancy.`,
+            title: "Sample building cohorts",
+            content: `The MIT dataset defines ${formatCount(POPULATION)} modeled people across ${BUILDINGS.length} locations: dorm counts are approximate bed counts and other buildings use a typical concurrent weekday occupancy. They are estimates, not enrollment, visits, or live occupancy.`,
           },
           {
             n: "03",
@@ -1071,8 +1096,8 @@ function Sources({ onClose }: { onClose: () => void }) {
             Icon: Map,
           },
           {
-            title: "Synthetic building cohorts",
-            detail: "14 locations · existing sample-buildings.json",
+            title: "MIT building cohorts",
+            detail: `${BUILDINGS.length} locations · seitr-sim/data · mit-campus.json`,
             Icon: FileJson,
           },
           {

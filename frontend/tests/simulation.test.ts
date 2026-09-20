@@ -42,7 +42,7 @@ test("21-day baseline matches the untouched original simulator", () => {
   const end = original.indexOf("function snapshot()", start);
   const input = JSON.parse(
     readFileSync(
-      new URL("../src/data/sample-buildings.json", import.meta.url),
+      new URL("../src/data/mit-campus.json", import.meta.url),
       "utf8",
     ),
   );

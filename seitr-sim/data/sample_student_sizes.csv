@@ -1,0 +1,33 @@
+id,population,basis
+maseeh,500,residents (approximate bed count)
+mccormick,240,residents (approximate bed count)
+baker,325,residents (approximate bed count)
+burton_conner,390,residents (approximate bed count)
+macgregor,320,residents (approximate bed count)
+new_house,290,residents (approximate bed count)
+next_house,360,residents (approximate bed count)
+simmons,340,residents (approximate bed count)
+east_campus,380,residents (approximate bed count)
+bldg7,250,typical concurrent students on a weekday
+bldg3,200,typical concurrent students on a weekday
+bldg10,350,typical concurrent students on a weekday
+bldg2,180,typical concurrent students on a weekday
+bldg4,220,typical concurrent students on a weekday
+bldg6,260,typical concurrent students on a weekday
+hayden,150,typical concurrent students on a weekday
+killian,80,typical concurrent students on a weekday
+bldg26,300,typical concurrent students on a weekday
+bldg45,260,typical concurrent students on a weekday
+bldg46,180,typical concurrent students on a weekday
+stata,400,typical concurrent students on a weekday
+media_lab,150,typical concurrent students on a weekday
+sloan,200,typical concurrent students on a weekday
+mit_medical,60,typical concurrent students on a weekday
+student_center,350,typical concurrent students on a weekday
+kresge,200,typical concurrent students on a weekday
+chapel,40,typical concurrent students on a weekday
+kresge_oval,60,typical concurrent students on a weekday
+zesiger,220,typical concurrent students on a weekday
+johnson,140,typical concurrent students on a weekday
+central_sq,120,typical concurrent students on a weekday
+back_bay,1000,residents (FSILG chapter houses combined)

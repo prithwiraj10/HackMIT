@@ -1,0 +1,569 @@
+/* Student support workspace. Every rule is scoped under .support so the
+   simulation dashboard and landing page keep their own styling. */
+
+.support .workspace {
+  padding-bottom: 40px;
+}
+.support .workspace > .panel + .panel,
+.support .workspace > .support-columns + .panel,
+.support .workspace > .panel + .support-columns {
+  margin-top: 22px;
+}
+.support-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--olive-light);
+  color: var(--olive);
+  padding: 8px 13px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.support-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.support-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.support-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+.support .panel-heading {
+  align-items: flex-start;
+}
+.support .panel-heading .button {
+  flex-shrink: 0;
+}
+.support .field-label:first-child {
+  margin-top: 0;
+}
+.support .panel-heading + .field-label,
+.support .panel-heading + .support-actions,
+.support .panel-heading + .support-chips {
+  margin-top: 0;
+}
+.support .text-input {
+  font: inherit;
+  resize: vertical;
+  display: block;
+}
+.support select.text-input {
+  appearance: auto;
+  padding: 10px 12px;
+}
+.support .text-input::placeholder {
+  color: #9aa394;
+}
+.support input[type="range"] {
+  margin: 2px 0 4px;
+}
+
+.support-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.support-chips button {
+  border: 1px solid #dde2d8;
+  background: #fff;
+  color: #667361;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.support-chips button:hover {
+  background: #f3f5ee;
+}
+.support-chips button.selected {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #fff;
+}
+
+.support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 18px;
+}
+.support-actions + .status-message {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+.support .status-message + .field-label {
+  margin-top: 18px;
+}
+.support-file {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.support-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.support-file:has(input:focus-visible) {
+  outline: 2px solid var(--olive);
+  outline-offset: 4px;
+}
+
+.support-credits {
+  font-size: 22px;
+  letter-spacing: -0.6px;
+  font-weight: 530;
+  color: var(--olive-dark);
+  white-space: nowrap;
+}
+
+.support-result {
+  background: var(--olive-light);
+  border: 1px solid #dbe5d5;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-top: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.support-result h3 {
+  font-size: 12px;
+  font-weight: 550;
+  margin: 14px 0 6px;
+}
+.support-result ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.support-result li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+.support-result li svg {
+  color: #81936f;
+}
+.support-result small {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.support-guidance {
+  white-space: pre-wrap;
+}
+.support-email pre {
+  white-space: pre-wrap;
+  font: inherit;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #dbe5d5;
+}
+.support-email + .support-email {
+  margin-top: 12px;
+}
+.support-disclaimer,
+.support-hint {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.support-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+.support-subhead {
+  font-size: 12px;
+  font-weight: 550;
+  margin: 20px 0 8px;
+}
+.support-subhead:first-of-type {
+  margin-top: 0;
+}
+
+.support-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.support-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+}
+.support-list li + li {
+  border-top: 1px solid var(--border);
+}
+.support-list strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+}
+.support-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.support-list .button {
+  flex-shrink: 0;
+}
+
+.support-request {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+.support-amount {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.support-amount .text-input {
+  margin-top: 6px;
+}
+.support-request .button {
+  height: 41px;
+}
+
+.support-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.support-calendar button {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  background: #fbfcf9;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #9ca891;
+  padding: 0;
+}
+.support-calendar button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.support-calendar button b {
+  font-size: 11px;
+  font-weight: 550;
+}
+.support-calendar button small {
+  font-size: 8px;
+  letter-spacing: 0.2px;
+}
+.support-calendar button.logged {
+  background: var(--olive-light);
+  border-color: #cfdcc6;
+  color: var(--olive-dark);
+}
+.support-calendar button.logged:hover,
+.support-calendar button[aria-pressed="true"] {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #fff;
+}
+.support-log-title {
+  margin-bottom: 8px;
+}
+
+.support-run {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.support-run h2 {
+  font-size: 13px;
+  font-weight: 550;
+}
+.support-run p {
+  color: #959e8f;
+  font-size: 10px;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+.support-post p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 12px;
+}
+.support-reply {
+  color: var(--muted);
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+.forum-reply-form {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.support-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.support-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.support-tool {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 18px;
+}
+.support-tool:hover {
+  border-color: #cfd7c6;
+  background: #fcfdf9;
+}
+.support-tool > span:not(.preset-icon) {
+  flex: 1;
+  min-width: 0;
+}
+.support-tool strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+}
+.support-tool p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.support-tool > svg {
+  color: #9ca891;
+}
+.support .experiment-note h3 {
+  font-size: 14px;
+  margin: 12px 0 8px;
+  font-weight: 550;
+}
+.support .experiment-note p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.support .experiment-note p + p {
+  margin-top: 8px;
+}
+.support-symptom-list {
+  color: #8a9a78;
+}
+
+/* Student-only demo account entry. It intentionally stays outside the app shell
+   so the simulation's navigation and styles are never involved. */
+.sign-in-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 84% 10%, #e2edda 0, transparent 31%),
+    radial-gradient(circle at 9% 88%, #edf1e5 0, transparent 29%), #f7f8f3;
+}
+.sign-in-card {
+  width: min(100%, 560px);
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 38px;
+  box-shadow: 0 22px 60px rgba(47, 60, 43, 0.1);
+}
+.sign-in-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 35px;
+}
+.sign-in-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+}
+.sign-in-brand small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 1.1px;
+}
+.sign-in-card h1 {
+  max-width: 450px;
+  margin: 10px 0 11px;
+  font-size: clamp(28px, 5vw, 38px);
+  line-height: 1.12;
+  letter-spacing: -1.3px;
+}
+.sign-in-intro {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+  max-width: 470px;
+}
+.sign-in-card form {
+  display: grid;
+  gap: 11px;
+  margin-top: 27px;
+}
+.sign-in-card .field-label {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 650;
+}
+.password-input-wrap {
+  position: relative;
+}
+.password-input-wrap svg {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  color: var(--muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.password-input-wrap .text-input {
+  padding-left: 39px;
+}
+.sign-in-button {
+  width: 100%;
+  justify-content: center;
+  margin-top: 5px;
+}
+.sign-in-error {
+  margin: -2px 0 0;
+  color: #a6443d;
+  font-size: 11px;
+}
+.sign-in-card .support-hint {
+  margin-bottom: 0;
+}
+
+/* Dark mode: shares the simulation's tokens (set on <html> by .theme-dark). */
+.theme-dark .support .text-input::placeholder,
+.theme-dark .support-run p,
+.theme-dark .support-tool > svg,
+.theme-dark .support-symptom-list {
+  color: var(--muted);
+}
+.theme-dark .support-chips button {
+  background: #1b211c;
+  border-color: var(--border);
+  color: var(--ink);
+}
+.theme-dark .support-chips button:hover {
+  background: #232b24;
+}
+.theme-dark .support-chips button.selected {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .support-result {
+  border-color: #2b3a2c;
+}
+.theme-dark .support-result li svg {
+  color: var(--olive);
+}
+.theme-dark .support-email pre {
+  border-top-color: #2b3a2c;
+}
+.theme-dark .support-calendar button {
+  background: #121713;
+  color: var(--muted);
+}
+.theme-dark .support-calendar button.logged {
+  border-color: #2b3a2c;
+  color: var(--olive);
+}
+.theme-dark .support-calendar button.logged:hover,
+.theme-dark .support-calendar button[aria-pressed="true"] {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .support-tool:hover {
+  border-color: #2b3a2c;
+  background: #1b211c;
+}
+.theme-dark .sign-in-shell {
+  background:
+    radial-gradient(circle at 84% 10%, #273025 0, transparent 31%), #101511;
+}
+.theme-dark .sign-in-card {
+  background: #161d17;
+}
+
+@media (max-width: 1200px) {
+  .support-overview {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 960px) {
+  .support-columns,
+  .support-tools,
+  .support-grid {
+    grid-template-columns: 1fr;
+  }
+  .support-request {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .support .page-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .support-run {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .sign-in-shell {
+    padding: 16px;
+  }
+  .sign-in-card {
+    padding: 26px 21px;
+  }
+  .sign-in-top {
+    margin-bottom: 27px;
+  }
+}

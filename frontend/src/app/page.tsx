@@ -1,4 +1,71 @@
-import { Dashboard } from "@/components/dashboard";
+import Link from "next/link";
+import { Fraunces } from "next/font/google";
+import { ArrowRight, Activity } from "lucide-react";
+import { LandingHero } from "@/components/landing-hero";
+import { ThemeToggle } from "@/components/theme-toggle";
+import "./landing.css";
+
+const display = Fraunces({
+  subsets: ["latin"],
+  weight: "variable",
+  axes: ["opsz", "SOFT"],
+  variable: "--font-display",
+});
+
 export default function Page() {
-  return <Dashboard />;
+  return (
+    <div className={`landing ${display.variable}`}>
+      <nav className="landing-nav" aria-label="Choose an audience">
+        <Link className="landing-brand" href="/" aria-label="Flu U home">
+          <span className="landing-mark">
+            <Activity size={19} strokeWidth={2.6} />
+          </span>
+          <span>
+            Flu<em>U</em>
+          </span>
+        </Link>
+        <div className="landing-switch">
+          <a href="#students">Campus simulation</a>
+          <a href="#admin">Student support</a>
+          <ThemeToggle className="landing-theme" />
+        </div>
+      </nav>
+
+      <LandingHero />
+
+      <section className="landing-section students" id="students">
+        <div className="section-copy">
+          <h2>Know your campus before it knows you.</h2>
+          <p>
+            See how an outbreak moves through the places you actually spend your
+            day — your dorm, your lecture hall, the dining hall you always end
+            up in at 7pm.
+          </p>
+          <Link className="landing-cta" href="/students">
+            Open the campus simulation <ArrowRight size={17} />
+          </Link>
+        </div>
+      </section>
+
+      <section className="landing-section admin" id="admin">
+        <div className="section-copy">
+          <h2>Sick day? Here&apos;s what to do next.</h2>
+          <p>
+            Food that matches your energy, policy-grounded triage for every
+            class, a voice when yours is gone, daily check-ins and a forum of
+            students who get it.
+          </p>
+          <Link className="landing-cta" href="/admin">
+            Open student support <ArrowRight size={17} />
+          </Link>
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        <span>
+          Built at HackMIT 2026 · Illustrative model, not medical advice
+        </span>
+      </footer>
+    </div>
+  );
 }

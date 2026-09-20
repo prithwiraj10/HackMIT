@@ -1,4 +1,4 @@
-import source from "@/data/sample-buildings.json";
+import source from "@/data/mit-campus.json";
 
 export type Compartments = {
   S: number;
@@ -20,6 +20,10 @@ export type BuildingState = Compartments & {
   id: string;
   name: string;
   type: string;
+  code: string;
+  zone: string;
+  about: string;
+  coordinates: [number, number];
   N: number;
   contact: number;
   newExposures: number;
@@ -38,6 +42,18 @@ export type Scenario = {
   name: string;
   params: Parameters;
   snapshots: Snapshot[];
+};
+export type SimulateOptions = {
+  // Per-building contact-multiplier scale applied from day 0
+  // (e.g. { maseeh: 0.5 } halves Maseeh's internal mixing).
+  contactScale?: Record<string, number>;
+  // Intervention starting mid-run: from `day` onward the model uses
+  // `params` and/or `contactScale` instead of the starting values.
+  changeAt?: {
+    day: number;
+    params?: Parameters;
+    contactScale?: Record<string, number>;
+  };
 };
 export const DAYS = 21;
 export const BASELINE: Parameters = {
@@ -67,16 +83,28 @@ export const STATE_COLORS = {
 const CONTACT_RATES: Record<string, number> = {
   dorm: 1.4,
   "dining hall": 1.6,
+  dining: 1.6,
   classroom: 0.8,
   library: 0.6,
   lab: 0.9,
   gym: 1.1,
   auditorium: 1,
+  academic: 0.8,
+  student_life: 1.3,
+  events: 1,
+  health: 0.7,
+  outdoor: 0.4,
+  off_campus: 1.2,
 };
-export const BUILDINGS = source.buildings.map((b, i) => ({
-  id: `building-${i}`,
+export const CAMPUS_SOURCE = source.source;
+export const BUILDINGS = source.buildings.map((b) => ({
+  id: b.id,
   name: b.name,
   type: b.type,
+  code: b.mitNumber,
+  zone: b.zone,
+  about: b.about,
+  coordinates: [b.lon, b.lat] as [number, number],
   N: b.population,
   contact: CONTACT_RATES[b.type] ?? 0.9,
 }));
@@ -110,8 +138,28 @@ function validate(p: Parameters) {
 export function simulate(
   params: Parameters = BASELINE,
   name = "Baseline",
+  options: SimulateOptions = {},
 ): Scenario {
   validate(params);
+  const changeAt = options.changeAt;
+  if (changeAt) {
+    if (changeAt.params) validate(changeAt.params);
+    if (
+      !Number.isInteger(changeAt.day) ||
+      changeAt.day < 1 ||
+      changeAt.day > DAYS
+    )
+      throw new Error(`changeAt.day must be an integer between 1 and ${DAYS}.`);
+  }
+  for (const scale of [options.contactScale, changeAt?.contactScale]) {
+    if (!scale) continue;
+    for (const [id, value] of Object.entries(scale)) {
+      if (!BUILDINGS.some((b) => b.id === id))
+        throw new Error(`Unknown building id in contactScale: ${id}.`);
+      if (!Number.isFinite(value) || value < 0 || value > 3)
+        throw new Error("contactScale values must be numbers between 0 and 3.");
+    }
+  }
   let states: BuildingState[] = BUILDINGS.map((b) => ({
     ...b,
     S: b.N,
@@ -124,6 +172,7 @@ export function simulate(
     internalPressure: 0,
     externalPressure: 0,
   }));
+  const contactScale = BUILDINGS.map((b) => options.contactScale?.[b.id] ?? 1);
   const seed = states
     .filter((b) => b.type === "dorm")
     .sort((a, b) => b.N - a.N)[0];
@@ -131,18 +180,20 @@ export function simulate(
   seed.S -= seed.I;
   seed.E = Math.min(3, seed.S);
   seed.S -= seed.E;
-  const weights = source.distances.map((row, i) =>
-    row.map((distance, j) =>
-      i === j ? 0 : Math.exp(-distance / params.decay),
-    ),
-  );
+  let current = params;
+  const buildWeights = (decay: number) =>
+    source.distances.map((row, i) =>
+      row.map((distance, j) => (i === j ? 0 : Math.exp(-distance / decay))),
+    );
+  let weights = buildWeights(current.decay);
   const pressure = (nodes: BuildingState[], i: number) => {
     const prevalence = nodes.map((b) => (b.I + 0.15 * b.T) / b.N);
-    const internalPressure = params.beta * nodes[i].contact * prevalence[i];
+    const internalPressure =
+      current.beta * nodes[i].contact * contactScale[i] * prevalence[i];
     const externalPressure = prevalence.reduce(
       (sum, value, j) =>
         sum +
-        (i === j ? 0 : params.beta * params.cross * weights[i][j] * value),
+        (i === j ? 0 : current.beta * current.cross * weights[i][j] * value),
       0,
     );
     return {
@@ -167,13 +218,25 @@ export function simulate(
   }
   capture(0);
   for (let day = 1; day <= DAYS; day++) {
+    if (changeAt && day === changeAt.day) {
+      if (changeAt.params) {
+        current = changeAt.params;
+        if (current.decay !== params.decay)
+          weights = buildWeights(current.decay);
+      }
+      if (changeAt.contactScale)
+        BUILDINGS.forEach((b, i) => {
+          const scale = changeAt.contactScale?.[b.id];
+          if (scale !== undefined) contactScale[i] = scale;
+        });
+    }
     states = states.map((b, i) => {
       const { exposureRate } = pressure(states, i);
       const newExposures = b.S * exposureRate;
-      const toI = b.E * (1 - Math.exp(-1 / params.incub));
-      const outI = b.I * (1 - Math.exp(-1 / params.inf));
-      const toT = outI * params.fracT;
-      const toR = b.T * (1 - Math.exp(-1 / params.iso));
+      const toI = b.E * (1 - Math.exp(-1 / current.incub));
+      const outI = b.I * (1 - Math.exp(-1 / current.inf));
+      const toT = outI * current.fracT;
+      const toR = b.T * (1 - Math.exp(-1 / current.iso));
       return {
         ...b,
         S: b.S - newExposures,
@@ -200,9 +263,10 @@ export function describeBuilding(b: BuildingState) {
   const total = b.internalPressure + b.externalPressure;
   const internalShare =
     total > 0 ? Math.round((b.internalPressure / total) * 100) : 0;
+  const type = b.type.replace(/_/g, " ");
   return total === 0
     ? "There is no modeled exposure pressure at this location on this day."
-    : `${internalShare}% of this location’s exposure pressure comes from within its own cohort. The other ${100 - internalShare}% comes from the model’s distance-weighted connections. Its ${b.type} contact multiplier is ${b.contact.toFixed(1)}×.`;
+    : `${internalShare}% of this location’s exposure pressure comes from within its own cohort. The other ${100 - internalShare}% comes from the model’s estimated walking-distance connections. Its ${type} contact multiplier is ${b.contact.toFixed(1)}×.`;
 }
 export const formatCount = (n: number) => Math.round(n).toLocaleString("en-US");
 export const formatRate = (n: number) => `${(n * 100).toFixed(1)}%`;
