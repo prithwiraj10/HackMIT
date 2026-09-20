@@ -20,7 +20,8 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("Soup + tea pickup");
   const [spot, setSpot] = useState(FOOD_SPOTS["MIT campus"][0]);
-  const [amount, setAmount] = useState(12);
+  const [amount, setAmount] = useState("12");
+  const [formError, setFormError] = useState("");
 
   const recommend = () =>
     setGuidance(foodGuidance(symptom === "today" ? todaySymptoms : [symptom]));
@@ -118,15 +119,20 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
             className="support-request"
             onSubmit={(e) => {
               e.preventDefault();
+              const credits = Number(amount);
+              if (
+                !/^\d+$/.test(amount.trim()) ||
+                credits < 1 ||
+                credits > 100
+              ) {
+                setFormError("Offer between 1 and 100 credits.");
+                return;
+              }
               setRequests((a) => [
                 ...a,
-                {
-                  id: Date.now(),
-                  title,
-                  spot,
-                  amount: Math.max(1, Number(amount) || 1),
-                },
+                { id: Date.now(), title, spot, amount: credits },
               ]);
+              setFormError("");
               setShowForm(false);
             }}
           >
@@ -152,9 +158,10 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
                 min={1}
                 max={100}
                 value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                onChange={(e) => setAmount(e.target.value)}
               />
             </label>
+            {formError && <p className="status-message">{formError}</p>}
             <button className="button primary" type="submit">
               Post request
             </button>
