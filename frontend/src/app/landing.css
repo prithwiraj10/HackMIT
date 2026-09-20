@@ -5,31 +5,37 @@ html {
 
 .landing {
   --nav: 88px;
-  --ink: #1a1508;
-  --ink-soft: rgba(26, 21, 8, 0.72);
-  --amber: #f5b400;
-  --amber-deep: #c98a00;
-  --cream: #fbf4e4;
-  --night: #161a2e;
-  --night-soft: rgba(246, 240, 226, 0.7);
+  --ink: #26362f;
+  --ink-soft: rgba(38, 54, 47, 0.72);
+  --green: #527050;
+  --green-deep: #3b563b;
+  --on-green: #f4f7f0;
+  --on-green-soft: rgba(244, 247, 240, 0.78);
+  --cream: #edf1e8;
+  --night: #1b2a20;
+  --night-soft: rgba(238, 242, 234, 0.7);
+  --night-accent: #9db98f;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  background: var(--amber);
-  color: var(--ink);
+  background: var(--green);
+  color: var(--on-green);
   font-size: 16px;
   letter-spacing: -0.01em;
   overflow-x: clip;
 }
 .landing ::selection {
   background: var(--ink);
-  color: var(--amber);
+  color: var(--on-green);
 }
 .landing :focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--on-green);
   outline-offset: 4px;
   border-radius: 4px;
 }
+.landing-section.students :focus-visible {
+  outline-color: var(--ink);
+}
 .landing-section.admin :focus-visible {
-  outline-color: var(--amber);
+  outline-color: var(--night-accent);
 }
 .landing h1,
 .landing h2,
@@ -49,7 +55,7 @@ html {
   justify-content: space-between;
   gap: 20px;
   padding: 0 clamp(18px, 5vw, 64px);
-  background: var(--amber);
+  background: var(--green);
 }
 .landing-brand {
   display: flex;
@@ -68,7 +74,7 @@ html {
   height: 38px;
   width: 38px;
   border-radius: 11px;
-  border: 2.25px solid var(--ink);
+  border: 2.25px solid var(--on-green);
   transform: rotate(45deg);
 }
 .landing-mark svg {
@@ -93,7 +99,7 @@ html {
   right: 0;
   bottom: 0;
   height: 2px;
-  background: var(--ink);
+  background: var(--on-green);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s var(--ease-out);
@@ -124,7 +130,7 @@ html {
   font-size: clamp(17px, 1.75vw, 20px);
   line-height: 1.5;
   font-weight: 500;
-  color: var(--ink-soft);
+  color: var(--on-green-soft);
 }
 .hero-actions {
   margin-top: 36px;
@@ -157,19 +163,19 @@ html {
 }
 .hero-actions .solid {
   background: var(--ink);
-  color: var(--amber);
-  box-shadow: 0 10px 24px -10px rgba(26, 21, 8, 0.6);
+  color: var(--on-green);
+  box-shadow: 0 10px 24px -10px rgba(20, 30, 24, 0.6);
 }
 .hero-actions .solid:hover {
-  box-shadow: 0 16px 30px -12px rgba(26, 21, 8, 0.7);
+  box-shadow: 0 16px 30px -12px rgba(20, 30, 24, 0.7);
 }
 .hero-actions .ghost {
-  border: 2px solid var(--ink);
-  color: var(--ink);
+  border: 2px solid var(--on-green);
+  color: var(--on-green);
 }
 .hero-actions .ghost:hover {
-  background: var(--ink);
-  color: var(--amber);
+  background: var(--on-green);
+  color: var(--ink);
 }
 
 .hero-cards {
@@ -181,10 +187,10 @@ html {
   margin: 0;
   overflow: hidden;
   border-radius: 14px;
-  background: var(--amber-deep);
+  background: var(--green-deep);
   box-shadow:
-    0 30px 60px -20px rgba(26, 21, 8, 0.45),
-    0 8px 18px -8px rgba(26, 21, 8, 0.3);
+    0 30px 60px -20px rgba(20, 30, 24, 0.5),
+    0 8px 18px -8px rgba(20, 30, 24, 0.35);
   animation: card-settle 1.1s var(--ease-out) both;
 }
 .hero-cards img {
@@ -229,10 +235,11 @@ html {
 }
 .landing-section.students {
   background: var(--cream);
+  color: var(--ink);
 }
 .landing-section.admin {
   background: var(--night);
-  color: #f6f0e2;
+  color: #eef2ea;
 }
 .section-copy {
   max-width: 46rem;
@@ -257,19 +264,19 @@ html {
   margin-top: 36px;
   background: var(--ink);
   color: var(--cream);
-  box-shadow: 0 10px 24px -10px rgba(26, 21, 8, 0.5);
+  box-shadow: 0 10px 24px -10px rgba(20, 30, 24, 0.5);
 }
 .landing-cta:hover {
-  background: var(--amber);
-  color: var(--ink);
+  background: var(--green);
+  color: var(--on-green);
 }
 .landing-section.admin .landing-cta {
-  background: var(--amber);
-  color: var(--ink);
-  box-shadow: 0 14px 30px -12px rgba(245, 180, 0, 0.5);
+  background: var(--night-accent);
+  color: var(--night);
+  box-shadow: 0 14px 30px -12px rgba(157, 185, 143, 0.5);
 }
 .landing-section.admin .landing-cta:hover {
-  background: #f6f0e2;
+  background: #eef2ea;
 }
 
 .landing-footer {
@@ -279,13 +286,13 @@ html {
   justify-content: space-between;
   gap: 14px;
   padding: 26px clamp(18px, 5vw, 64px);
-  background: var(--amber);
+  background: var(--green);
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink-soft);
+  color: var(--on-green-soft);
 }
 .landing-footer a {
-  color: var(--ink);
+  color: var(--on-green);
   font-weight: 620;
   text-decoration: underline;
   text-decoration-thickness: 1.5px;
