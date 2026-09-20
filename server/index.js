@@ -33,6 +33,12 @@ app.post('/api/login', (req,res)=>{ const u=db.prepare('SELECT id,name,credits F
 app.get('/api/requests', (_,res)=>res.json(db.prepare(`SELECT r.*, u.name requester, v.name volunteer FROM food_requests r JOIN users u ON u.id=r.requester_id LEFT JOIN users v ON v.id=r.volunteer_id ORDER BY r.id DESC`).all()))
 app.post('/api/requests', (req,res)=>{ const {userId,title,spot,cost,note}=req.body; const x=db.prepare('INSERT INTO food_requests (requester_id,title,spot,cost,note) VALUES (?,?,?,?,?)').run(userId,title,spot,Number(cost),note); res.json({id:x.lastInsertRowid}) })
 app.post('/api/requests/:id/claim', (req,res)=>{ const r=db.prepare('SELECT * FROM food_requests WHERE id=?').get(req.params.id), volunteer=Number(req.body.userId); if(!r||r.status!=='open') return res.status(409).json({error:'This request is no longer available.'}); const requester=db.prepare('SELECT credits FROM users WHERE id=?').get(r.requester_id); if(requester.credits<r.cost) return res.status(400).json({error:'Requester does not have enough mock credits.'}); const tx=db.transaction(()=>{db.prepare('UPDATE users SET credits=credits-? WHERE id=?').run(r.cost,r.requester_id);db.prepare('UPDATE users SET credits=credits+? WHERE id=?').run(r.cost,volunteer);db.prepare("UPDATE food_requests SET status='claimed', volunteer_id=? WHERE id=?").run(volunteer,r.id)}); tx(); res.json({ok:true,users:users()}) })
+app.post('/api/food/recommend', async(req,res)=>{
+  const {symptoms,location,preferences}=req.body
+  const fallback={summary:'Choose gentle, easy-to-eat foods and hydrate. This is general support, not medical advice.',foods:['Soup or broth','Toast or rice','Bananas or applesauce','Tea or water'],avoid:['Very spicy foods','Heavy greasy meals','Alcohol'],deliveryNote:`Look near ${location||'campus'} for soups, bowls, smoothies, tea, or simple groceries.`,requestText:'Could someone pick up soup, tea, and an easy snack? I am low energy and can do a contactless handoff.'}
+  if(!env('OPENAI_API_KEY')) return res.json(fallback)
+  try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Food Coordinator for a student illness support demo. Give general categorical food ideas only, never diagnosis, treatment, supplements, or dosing. Return JSON with summary, foods array, avoid array, deliveryNote, requestText.'},{role:'user',content:JSON.stringify({symptoms,location,preferences})}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}catch{res.json(fallback)}
+})
 app.get('/api/checkins/:userId', (req,res)=>res.json(db.prepare('SELECT * FROM checkins WHERE user_id=? ORDER BY date DESC,id DESC').all(req.params.userId)))
 app.post('/api/checkins', (req,res)=>{ const {userId,symptoms,energy,note}=req.body; db.prepare('INSERT INTO checkins (user_id,date,symptoms,energy,note) VALUES (?,?,?,?,?)').run(userId,new Date().toISOString().slice(0,10),symptoms.join(','),energy,note);res.json({ok:true}) })
 app.get('/api/posts', (_,res)=>res.json(db.prepare(`SELECT p.*,u.name, (SELECT COUNT(*) FROM replies WHERE post_id=p.id) replies FROM posts p JOIN users u ON u.id=p.user_id ORDER BY p.id DESC`).all()))
@@ -46,6 +52,13 @@ async function analyzeWithOpenAI(text){
 }
 app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), async(req,res)=>{ try { const data=await pdf(req.body); res.json({text:data.text,analysis:await analyzeWithOpenAI(data.text)}); } catch {res.status(400).json({error:'Could not extract this PDF. Use the paste-text fallback.'})} })
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
+app.post('/api/academics/plan', async(req,res)=>{
+  const {classes,illness,availability}=req.body
+  const summaries=Array.isArray(classes)?classes.map(c=>({course:c.course||'Class',analysis:analyze(c.text||''),contact:c.contact||'Instructor / TA'})):[]
+  const fallback={overview:'Focus first on strict policies, high-stakes deadlines, and instructors who require early notice.',urgent:summaries.flatMap(s=>s.analysis.assignments.map(a=>({course:s.course,item:a.name,why:a.why,priority:a.priority}))),contacts:summaries.map(s=>({course:s.course,who:s.contact,why:s.analysis.action})),emails:summaries.map(s=>({course:s.course,subject:`Absence / sick-day plan for ${s.course}`,body:`Hello,\n\nI am currently ill and trying to make a responsible plan for ${s.course}. Could you let me know what I should prioritize first and whether there is a makeup or extension path for any affected work?\n\nThank you,\n[Your name]`}))}
+  if(!env('OPENAI_API_KEY')) return res.json(fallback)
+  try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Academic Navigator for a sick student. Use only provided syllabus/policy and assignment info. Prioritize urgent work, tell who to contact, and draft concise emails. Never invent school policy. Return JSON with overview, urgent [{course,item,why,priority}], contacts [{course,who,why}], emails [{course,subject,body}].'},{role:'user',content:JSON.stringify({classes,illness,availability}).slice(0,30000)}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}catch{res.json(fallback)}
+})
 const env = key => (process.env[key] || '').trim()
 const E164=/^\+[1-9]\d{7,14}$/
 const PRIVATE_V4=/^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/
@@ -61,7 +74,7 @@ const isLocalHost=hostname=>{
   return false
 }
 const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!isLocalHost(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
-app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl})})
+app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl,vapi:Boolean(env('VAPI_API_KEY')&&env('VAPI_PHONE_NUMBER_ID'))})})
 app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
   if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
   if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
@@ -75,6 +88,18 @@ app.post('/api/lost-voice/compose', async(req,res)=>{
   if(!env('OPENAI_API_KEY')) return res.json(fallback)
   try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Lost Voice Relay for a student illness support demo. Convert rough typed or transcribed context into a short, speakable message the student can play aloud or show someone. Be practical, warm, and concise. Do not diagnose, prescribe, or give medical dosing. Return JSON with say, backup, keyPoints array.'},{role:'user',content:JSON.stringify({raw,audience,goal,tone})}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}
   catch{res.json(fallback)}
+})
+app.post('/api/vapi/call', async(req,res)=>{
+  const {to,text}=req.body
+  const token=env('VAPI_API_KEY'), phoneNumberId=env('VAPI_PHONE_NUMBER_ID'), assistantId=env('VAPI_ASSISTANT_ID')
+  if(!token||!phoneNumberId) return res.status(503).json({error:'Add VAPI_API_KEY and VAPI_PHONE_NUMBER_ID to .env, then restart the server.'})
+  if(!/^\+[1-9]\d{7,14}$/.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
+  const context=String(text||'').slice(0,1600).trim()
+  if(!context) return res.status(400).json({error:'Add what the voice agent should know before the call.'})
+  const prompt=`You are Freshman Flu Voice Coach, a concise call assistant for a sick MIT student who may have a weak or lost voice. Help them communicate with campus health, a doctor's office, student services, a roommate, or a professor. Ask one question at a time. Keep spoken responses short. Do not diagnose, prescribe medication, give dosage, or claim to be a clinician. For urgent symptoms, advise contacting MIT Medical or emergency services. Student context: ${context}`
+  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
+  try{const r=await fetch('https://api.vapi.ai/call',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.message||d.error||'Vapi could not place the call.',details:d});res.json({ok:true,id:d.id,status:d.status})}
+  catch(err){res.status(500).json({error:err.message||'Vapi call failed.'})}
 })
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body

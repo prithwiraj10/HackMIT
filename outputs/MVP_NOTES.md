@@ -19,6 +19,7 @@
 - Academic analysis uses OpenAI when `OPENAI_API_KEY` is present; otherwise a transparent local rule-based fallback powers the exact same interface. It only summarizes policy language and should be reviewed against the syllabus.
 - The voice screen works as browser text-to-speech without keys. `DEEPGRAM_API_KEY` marks the live provider ready, but full real-time microphone streaming is intentionally left as the next integration step.
 - The optional Twilio call button makes a real outbound text-to-speech call only after explicit on-screen confirmation. It needs Twilio credentials and a public HTTPS URL (for example, ngrok). Trial accounts can call verified recipients only and play Twilio's trial disclosure.
+- The newer optional Vapi live-call path is the preferred real-call direction. It needs `VAPI_API_KEY`, `VAPI_PHONE_NUMBER_ID`, and usually `VAPI_ASSISTANT_ID`. Configure that assistant in Vapi with Deepgram as the transcriber, or let the backend attempt an inline Deepgram assistant.
 - Check-in trends are a basic per-account history list, not a medical tracker or diagnostic chart.
 - Community search filters local post text/symptom labels. It does not use Elasticsearch, recommendations, moderation, reporting, or notifications.
 
@@ -33,4 +34,8 @@ DEEPGRAM_AGENT_ID= # optional; not required by this MVP
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_PUBLIC_URL=
+VAPI_API_KEY=
+VAPI_PHONE_NUMBER_ID=
+VAPI_ASSISTANT_ID=
+VAPI_PUBLIC_KEY=
 ```
