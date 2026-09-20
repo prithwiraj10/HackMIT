@@ -62,6 +62,20 @@ const isLocalHost=hostname=>{
 }
 const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!isLocalHost(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
 app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl})})
+app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
+  if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
+  if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
+  try{const r=await fetch('https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&language=en',{method:'POST',headers:{Authorization:`Token ${env('DEEPGRAM_API_KEY')}`,'Content-Type':req.headers['content-type']||'audio/webm'},body:req.body});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.err_msg||d.message||'Deepgram could not transcribe this recording.'});const transcript=d.results?.channels?.[0]?.alternatives?.[0]?.transcript||'';res.json({transcript,confidence:d.results?.channels?.[0]?.alternatives?.[0]?.confidence})}
+  catch(err){res.status(500).json({error:err.message||'Transcription failed.'})}
+})
+app.post('/api/lost-voice/compose', async(req,res)=>{
+  const {raw,audience,goal,tone}=req.body
+  if(!String(raw||'').trim()) return res.status(400).json({error:'Add what you need to communicate first.'})
+  const fallback={say:`Hi, I am not feeling well and my voice is limited. ${raw}`.slice(0,500),backup:'Could you please give me a moment or let me type the rest?',keyPoints:['Keep it short','Ask for the specific help you need','Use MIT Medical or emergency services for urgent symptoms']}
+  if(!env('OPENAI_API_KEY')) return res.json(fallback)
+  try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Lost Voice Relay for a student illness support demo. Convert rough typed or transcribed context into a short, speakable message the student can play aloud or show someone. Be practical, warm, and concise. Do not diagnose, prescribe, or give medical dosing. Return JSON with say, backup, keyPoints array.'},{role:'user',content:JSON.stringify({raw,audience,goal,tone})}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}
+  catch{res.json(fallback)}
+})
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
   const accountSid = env('TWILIO_ACCOUNT_SID')
@@ -89,16 +103,20 @@ function bridgeMedia(twilioWs, scriptId){
   const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(scriptId)
   const dgKey=env('DEEPGRAM_API_KEY')
   if(!script||!dgKey){twilioWs.close();return}
-  let streamSid='',dgReady=false,mark=0
+  console.log('Twilio media stream connected', {scriptId})
+  let streamSid='',dgReady=false,dgConfigured=false,mark=0
   const pending=[]
   const dg=new WebSocket('wss://agent.deepgram.com/v1/agent/converse',{headers:{Authorization:`Token ${dgKey}`}})
   const sendToTwilio = obj => { if(twilioWs.readyState===WebSocket.OPEN) twilioWs.send(JSON.stringify(obj)) }
   const sendAudioToTwilio = data => { if(!streamSid)return;sendToTwilio({event:'media',streamSid,media:{payload:Buffer.from(data).toString('base64')}});sendToTwilio({event:'mark',streamSid,mark:{name:`dg-${++mark}`}}) }
-  dg.on('open',()=>{dgReady=true;dg.send(JSON.stringify(agentSettings(script.text)));while(pending.length)dg.send(pending.shift())})
-  dg.on('message',(data,isBinary)=>{if(isBinary)return sendAudioToTwilio(data);try{const msg=JSON.parse(data.toString());const type=msg.type||msg.event||'';if(type==='UserStartedSpeaking'||type==='User Started Speaking'||type==='AgentV1UserStartedSpeaking')sendToTwilio({event:'clear',streamSid});if(type==='ConversationText')console.log('Deepgram conversation:', msg.role, msg.content)}catch{}})
+  const maybeStartDeepgram = () => { if(dgConfigured||!dgReady||!streamSid)return;dgConfigured=true;console.log('Deepgram voice agent configured', {streamSid});dg.send(JSON.stringify(agentSettings(script.text)));while(pending.length)dg.send(pending.shift()) }
+  dg.on('open',()=>{dgReady=true;console.log('Deepgram voice agent socket open');maybeStartDeepgram()})
+  dg.on('message',(data,isBinary)=>{if(isBinary)return sendAudioToTwilio(data);try{const msg=JSON.parse(data.toString());const type=msg.type||msg.event||'';if(type==='Error'||type==='Warning')console.log('Deepgram voice agent event', msg);if(type==='UserStartedSpeaking'||type==='User Started Speaking'||type==='AgentV1UserStartedSpeaking')sendToTwilio({event:'clear',streamSid});if(type==='ConversationText')console.log('Deepgram conversation:', msg.role, msg.content)}catch{}})
   dg.on('error',err=>console.error('Deepgram voice agent failed', err.message))
-  twilioWs.on('message',raw=>{try{const msg=JSON.parse(raw.toString());if(msg.event==='start')streamSid=msg.start?.streamSid||msg.streamSid;if(msg.event==='media'){const audio=Buffer.from(msg.media.payload,'base64');dgReady&&dg.readyState===WebSocket.OPEN?dg.send(audio):pending.push(audio)}if(msg.event==='stop')dg.close()}catch(err){console.error('Twilio media bridge failed', err.message)}})
-  twilioWs.on('close',()=>{if(dg.readyState===WebSocket.OPEN||dg.readyState===WebSocket.CONNECTING)dg.close()})
+  dg.on('close',(code,reason)=>{console.log('Deepgram voice agent closed', {code,reason:reason.toString()});if(twilioWs.readyState===WebSocket.OPEN)twilioWs.close()})
+  twilioWs.on('message',raw=>{try{const msg=JSON.parse(raw.toString());if(msg.event==='start'){streamSid=msg.start?.streamSid||msg.streamSid;console.log('Twilio media stream started', {streamSid});maybeStartDeepgram()}if(msg.event==='media'){const audio=Buffer.from(msg.media.payload,'base64');dgConfigured&&dg.readyState===WebSocket.OPEN?dg.send(audio):pending.push(audio)}if(msg.event==='stop'){console.log('Twilio media stream stopped');dg.close()}}catch(err){console.error('Twilio media bridge failed', err.message)}})
+  twilioWs.on('error',err=>console.error('Twilio media stream failed', err.message))
+  twilioWs.on('close',(code,reason)=>{console.log('Twilio media stream closed', {code,reason:reason.toString()});if(dg.readyState===WebSocket.OPEN||dg.readyState===WebSocket.CONNECTING)dg.close()})
 }
 const server=http.createServer(app), mediaServer=new WebSocketServer({noServer:true})
 server.on('upgrade',(req,socket,head)=>{const match=req.url?.match(/^\/api\/media\/(\d+)/);if(!match)return socket.destroy();mediaServer.handleUpgrade(req,socket,head,ws=>bridgeMedia(ws,match[1]))})
