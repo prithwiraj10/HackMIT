@@ -101,43 +101,6 @@
   margin-top: 16px;
   margin-bottom: 0;
 }
-.live-call-panel {
-  grid-column: 1 / -1;
-}
-.live-call-consent {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-top: 15px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
-.live-call-consent input {
-  margin-top: 2px;
-}
-.live-call-question,
-.live-call-transcript {
-  margin-top: 16px;
-  border: 1px solid var(--border);
-  background: #fbfcf9;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 11px;
-  line-height: 1.55;
-}
-.live-call-question .text-input {
-  margin-top: 8px;
-}
-.live-call-question .button {
-  margin-top: 8px;
-}
-.live-call-transcript p {
-  margin: 0;
-}
-.live-call-transcript p + p {
-  margin-top: 6px;
-}
 .support .status-message + .field-label {
   margin-top: 18px;
 }
