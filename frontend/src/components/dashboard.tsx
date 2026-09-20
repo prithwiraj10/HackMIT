@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   CircleHelp,
-  Download,
   FileJson,
   FlaskConical,
   FolderOpen,
@@ -18,18 +17,21 @@ import {
   Layers3,
   Map,
   MapPin,
+  Moon,
   Pause,
   Play,
   RotateCcw,
   Search,
   SlidersHorizontal,
   Sparkles,
+  Sun,
   Users,
   X,
 } from "lucide-react";
 import { CampusMap } from "./campus-map";
 import { TrendChart } from "./trend-chart";
 import { LocationDetail } from "./location-detail";
+import { ChatPanel } from "./chat-panel";
 import {
   BASELINE,
   BUILDINGS,
@@ -59,6 +61,9 @@ export function Dashboard() {
   const [speed, setSpeed] = useState(1);
   const [selected, setSelected] = useState(BUILDINGS[0].id);
   const [query, setQuery] = useState("");
+  const [showLocationInsight, setShowLocationInsight] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [mapResetKey, setMapResetKey] = useState(0);
   const [comparison, setComparison] = useState<Scenario | null>(null);
   const [active, setActive] = useState("baseline");
   const [sources, setSources] = useState(false);
@@ -91,28 +96,13 @@ export function Dashboard() {
     setView(next);
     setNotice("");
   };
-  const exportRun = () => {
-    const url = URL.createObjectURL(
-      new Blob(
-        [
-          JSON.stringify(
-            { synthetic: true, model: "Deterministic SEITR", ...current },
-            null,
-            2,
-          ),
-        ],
-        { type: "application/json" },
-      ),
-    );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "freshman-flu-scenario.json";
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    setNotice("Scenario exported as JSON.");
-  };
+  const matches = BUILDINGS.filter((candidate) =>
+    `${candidate.name} ${candidate.code} ${candidate.type}`
+      .toLowerCase()
+      .includes(query.trim().toLowerCase()),
+  );
   return (
-    <div className="app-shell">
+    <div className={darkMode ? "app-shell theme-dark" : "app-shell"}>
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
@@ -202,19 +192,6 @@ export function Dashboard() {
           </dl>
         </div>
         <div className="sidebar-bottom">
-          <div className="sidebar-note">
-            <FlaskConical size={18} />
-            <p>
-              A little curiosity.
-              <br />A lot of what-ifs.
-            </p>
-            <span>
-              Explore how an outbreak changes under different assumptions.
-            </span>
-            <button onClick={() => navigate("scenarios")}>
-              Try a scenario <ArrowRight size={14} />
-            </button>
-          </div>
           <button className="method-link" onClick={() => navigate("method")}>
             <CircleHelp size={16} /> About this simulation
           </button>
@@ -250,27 +227,16 @@ export function Dashboard() {
             </p>
           </div>
           <div className="heading-actions">
-            {view === "simulation" && (
-              <label className="scenario-select">
-                <Layers3 size={15} />
-                <select
-                  aria-label="Displayed scenario"
-                  value={active}
-                  onChange={(e) => {
-                    setActive(e.target.value);
-                    setPlaying(false);
-                  }}
-                >
-                  <option value="baseline">Baseline scenario</option>
-                  {comparison && (
-                    <option value="comparison">{comparison.name}</option>
-                  )}
-                </select>
-              </label>
-            )}
-            <button className="button" onClick={exportRun}>
-              <Download size={15} />
-              <span>Export run</span>
+            <button
+              className="theme-toggle"
+              type="button"
+              aria-pressed={darkMode}
+              onClick={() => setDarkMode((enabled) => !enabled)}
+            >
+              <span className="theme-toggle-icon">
+                {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+              </span>
+              <span>{darkMode ? "Light mode" : "Dark mode"}</span>
             </button>
           </div>
         </div>
@@ -308,50 +274,110 @@ export function Dashboard() {
                     <strong>Campus overview</strong>
                     <span>{BUILDINGS.length} locations</span>
                   </div>
-                  <div className="search-box">
-                    <Search size={15} />
-                    <input
-                      aria-label="Find a building"
-                      placeholder="Find a building…"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                    {query && (
-                      <button
-                        aria-label="Clear building search"
-                        onClick={() => setQuery("")}
-                      >
-                        <X size={13} />
-                      </button>
-                    )}
-                    {query && (
-                      <div className="search-results">
-                        {BUILDINGS.filter((b) =>
-                          b.name.toLowerCase().includes(query.toLowerCase()),
-                        ).map((b) => (
+                  <button
+                    className="map-reset-button"
+                    type="button"
+                    onClick={() => setMapResetKey((key) => key + 1)}
+                  >
+                    <RotateCcw size={14} />
+                    Reset view
+                  </button>
+                </div>
+                <div className="map-stage">
+                  <CampusMap
+                    buildings={snapshot.buildings}
+                    selected={selected}
+                    onSelect={setSelected}
+                    resetKey={mapResetKey}
+                  />
+                  <div className="map-search-glass">
+                    <span className="eyebrow">EXPLORE THE CAMPUS</span>
+                    <label className="search-box">
+                      <Search size={16} />
+                      <input
+                        aria-label="Find a building"
+                        placeholder="Find a building…"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                      />
+                      {query && (
+                        <button
+                          type="button"
+                          aria-label="Clear building search"
+                          onClick={() => setQuery("")}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </label>
+                  </div>
+                  {query.trim() && (
+                    <div className="search-results" role="listbox">
+                      <div className="search-results-heading">
+                        <span>BUILDING RESULTS</span>
+                        <small>{matches.length} found</small>
+                      </div>
+                      {matches.slice(0, 6).map((candidate) => {
+                        const state = snapshot.buildings.find(
+                          (item) => item.id === candidate.id,
+                        );
+                        return (
                           <button
-                            key={b.id}
+                            key={candidate.id}
+                            type="button"
+                            role="option"
+                            aria-selected={selected === candidate.id}
                             onClick={() => {
-                              setSelected(b.id);
+                              setSelected(candidate.id);
                               setQuery("");
+                              setShowLocationInsight(true);
                             }}
                           >
-                            <MapPin size={14} />
-                            {b.name}
+                            <span className="result-icon">
+                              <MapPin size={14} />
+                            </span>
+                            <span>
+                              <strong>{candidate.name}</strong>
+                              <small>
+                                {candidate.code} ·{" "}
+                                {candidate.type.replace(/_/g, " ")}
+                              </small>
+                            </span>
+                            {state && (
+                              <span
+                                className={`risk-badge ${risk(state.exposureRate).className}`}
+                              >
+                                {formatRate(state.exposureRate)}
+                              </span>
+                            )}
                           </button>
-                        ))}
-                        {!BUILDINGS.some((b) =>
-                          b.name.toLowerCase().includes(query.toLowerCase()),
-                        ) && <span>No matching buildings</span>}
-                      </div>
-                    )}
-                  </div>
+                        );
+                      })}
+                      {matches.length === 0 && (
+                        <span className="empty-result">
+                          No matching buildings
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {showLocationInsight && (
+                    <div className="location-glass">
+                      <button
+                        className="location-glass-close"
+                        type="button"
+                        aria-label="Close location insight"
+                        onClick={() => setShowLocationInsight(false)}
+                      >
+                        <X size={15} />
+                      </button>
+                      <LocationDetail
+                        building={building}
+                        day={day}
+                        onMethod={() => navigate("method")}
+                      />
+                    </div>
+                  )}
                 </div>
-                <CampusMap
-                  buildings={snapshot.buildings}
-                  selected={selected}
-                  onSelect={setSelected}
-                />
                 <div className="timeline">
                   <div className="timeline-top">
                     <div className="timeline-day">
@@ -430,11 +456,6 @@ export function Dashboard() {
                   </div>
                 </div>
               </div>
-              <LocationDetail
-                building={building}
-                day={day}
-                onMethod={() => navigate("method")}
-              />
             </section>
             <div className="overview-bottom">
               <section className="panel">
@@ -519,6 +540,7 @@ export function Dashboard() {
           <span>Public MIT geography · Uncalibrated research prototype</span>
         </footer>
       </main>
+      <ChatPanel />
       {sources && <Sources onClose={() => setSources(false)} />}
     </div>
   );
