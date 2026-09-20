@@ -48,7 +48,7 @@ app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), as
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
 const env = key => (process.env[key] || '').trim()
 const E164=/^\+[1-9]\d{7,14}$/
-const LOCAL_HOST=/^(localhost|\[::1\]|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)|\.local$/i
+const LOCAL_HOST=/^(localhost|\[::1?\]|\[(f[cd][0-9a-f]{2}|fe[89ab][0-9a-f]):|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)|\.local$/i
 const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!LOCAL_HOST.test(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
 app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl})})
 app.post('/api/call', async(req,res)=>{
