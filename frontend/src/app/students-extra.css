@@ -18,3 +18,17 @@
 .student-shell .calendar small{color:#51604f;display:block;font-size:.68rem;margin-top:.25rem}
 .student-shell .calendar-day{color:#879087;font-size:.68rem;text-align:center}
 @media(max-width:760px){.student-shell .checkin{grid-template-columns:1fr}.student-shell .request-form{grid-template-columns:1fr}.student-shell .calendar button{min-height:48px}}
+.student-shell select,.student-shell input[type="number"]{background:#fff;border:1px solid #d6ddd0;border-radius:7px;margin:.4rem 0;padding:.6rem;width:100%}
+.student-shell label{display:block;font-size:.9rem;font-weight:700;margin:.75rem 0}
+.student-shell .button-row{display:flex;flex-wrap:wrap;gap:.55rem;margin:.8rem 0}
+.student-shell .button-row button,.student-shell .forum-post button{background:#fff;border:1px solid #cbd4c4;border-radius:7px;color:#344038;cursor:pointer;font-weight:700;padding:.55rem .7rem}
+.student-shell .button-row .primary{background:var(--olive);border-color:var(--olive);color:#fff}
+.student-shell .credits{background:#e8f0e2;border-radius:99px;color:#38522e;padding:.55rem .8rem}
+.student-shell .amount{margin:0}.student-shell .amount input{margin:0}
+.student-shell .result li{align-items:center;display:flex;gap:.35rem;list-style:none;margin:.35rem 0}
+.student-shell .result ul{padding:0}
+.student-shell .transcript{border-left:3px solid #9cae92;margin-top:1rem;padding-left:1rem}
+.student-shell .transcript p{margin:.4rem 0}
+.student-shell .guidance{white-space:pre-wrap}
+.student-shell .forum-post{border-left:4px solid #a6ba9a}
+.student-shell .forum-post .reply{background:#f5f7f3;border-radius:7px;padding:.55rem}
