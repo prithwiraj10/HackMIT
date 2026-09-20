@@ -111,16 +111,6 @@ html {
   align-items: center;
   gap: clamp(28px, 5vw, 60px);
   padding: clamp(24px, 4vw, 40px) clamp(18px, 5vw, 64px) clamp(48px, 7vw, 96px);
-  isolation: isolate;
-}
-.hero-trail {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  height: 100%;
-  width: 100%;
-  color: rgba(26, 21, 8, 0.32);
-  pointer-events: none;
 }
 .hero-copy h1 {
   font-size: clamp(46px, 7.4vw, 96px);
@@ -317,9 +307,6 @@ html {
     min-height: 0;
     aspect-ratio: 4 / 3;
     max-width: 560px;
-  }
-  .hero-trail {
-    color: rgba(26, 21, 8, 0.22);
   }
 }
 @media (max-width: 560px) {

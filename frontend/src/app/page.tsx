@@ -31,32 +31,6 @@ export default function Page() {
       </nav>
 
       <header className="landing-hero">
-        <svg
-          className="hero-trail"
-          viewBox="0 0 1440 900"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M-40 210 C 180 120, 300 330, 520 300 S 900 120, 1180 220 1480 160 1480 160"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeDasharray="10 14"
-          />
-          <path
-            d="M-40 720 C 220 700, 300 520, 560 560 S 980 800, 1240 700 1480 620 1480 620"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeDasharray="10 14"
-          />
-          <circle cx="520" cy="300" r="6" fill="currentColor" />
-          <circle cx="1180" cy="220" r="6" fill="currentColor" />
-          <circle cx="560" cy="560" r="6" fill="currentColor" />
-          <circle cx="1240" cy="700" r="6" fill="currentColor" />
-        </svg>
-
         <div className="hero-copy">
           <h1>Outrun the outbreak</h1>
           <p>
