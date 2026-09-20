@@ -37,7 +37,6 @@ NEXT_PUBLIC_GOOGLE_MAP_ID=your_optional_3d_map_id
 Restart `npm run dev` after changing environment variables. The Google key is expected to be visible in browser requests, so referrer and API restrictions are required. `.env.local` is ignored by Git and must never be committed.
 
 When configured, the map opens on a satellite globe, flies into MIT, renders all 32 model locations as risk-colored 3D markers, moves to a selected building, and falls back to the bundled map if Google fails to initialize.
->>>>>>> origin/campus_map_working
 
 ```sh
 npm test

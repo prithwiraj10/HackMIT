@@ -1,3 +1,5 @@
+import { LogOut } from "lucide-react";
+import { Dashboard } from "@/components/dashboard";
 import { TitleBar } from "@/components/title-bar";
 import { isAdmin } from "@/lib/admin-auth";
 import { AdminLogin } from "./admin-login";
@@ -16,18 +18,13 @@ export default async function Page() {
       </div>
     );
   return (
-    <div className="audience-page">
-      <TitleBar
-        title="Admin"
-        action={
-          <form action={signOut}>
-            <button className="button quiet" type="submit">
-              Sign out
-            </button>
-          </form>
-        }
-      />
-      <main />
-    </div>
+    <>
+      <Dashboard />
+      <form className="admin-signout" action={signOut}>
+        <button className="button" type="submit">
+          <LogOut size={14} /> Sign out
+        </button>
+      </form>
+    </>
   );
 }

@@ -2215,6 +2215,16 @@ td small {
 .title-bar form {
   margin-left: auto;
 }
+.admin-signout {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 40;
+}
+.admin-signout .button {
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(20, 30, 20, 0.14);
+}
 .login-main {
   display: grid;
   place-items: center;

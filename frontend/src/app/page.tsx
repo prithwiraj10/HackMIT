@@ -26,7 +26,6 @@ export default function Page() {
         <div className="landing-switch">
           <a href="#students">Students</a>
           <a href="#admin">Admin</a>
-          <Link href="/simulation">Simulation</Link>
         </div>
       </nav>
 
@@ -99,7 +98,6 @@ export default function Page() {
         <span>
           Built at HackMIT 2026 · Illustrative model, not medical advice
         </span>
-        <Link href="/simulation">Campus simulation</Link>
       </footer>
     </div>
   );

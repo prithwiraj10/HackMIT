@@ -35,6 +35,16 @@ const MAX_SESSIONS = 500;
 const SESSION_TTL_MS = 60 * 60 * 1000;
 const lastSeen = new Map<string, number>();
 
+function loadSession(id: string) {
+  const seen = lastSeen.get(id);
+  if (seen === undefined || Date.now() - seen > SESSION_TTL_MS) {
+    sessions.delete(id);
+    lastSeen.delete(id);
+    return [];
+  }
+  return [...(sessions.get(id) ?? [])];
+}
+
 function saveSession(id: string, history: Message[]) {
   const now = Date.now();
   for (const [key, seen] of lastSeen)
@@ -127,7 +137,7 @@ export async function POST(request: Request) {
       ? payload.sessionId.slice(0, 64)
       : "default";
 
-  const history = sessions.get(sessionId) ?? [];
+  const history = loadSession(sessionId);
   history.push({ role: "user", content: message.trim() });
   const toolCalls: ToolCallRecord[] = [];
 
