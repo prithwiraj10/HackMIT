@@ -79,11 +79,14 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 };
 
 const STORAGE_KEY = "flu-u-checkins";
+const LEGACY_STORAGE_KEY = "freshman-flu-checkins";
 
 function loadCheckIns(): CheckIn[] {
   try {
     const parsed: unknown = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) ?? "null",
+      localStorage.getItem(STORAGE_KEY) ??
+        localStorage.getItem(LEGACY_STORAGE_KEY) ??
+        "null",
     );
     return Array.isArray(parsed) ? (parsed as CheckIn[]) : [];
   } catch {

@@ -22,6 +22,7 @@ export const FORUM_SEED: Post[] = [
 ];
 
 const STORAGE_KEY = "flu-u-forum";
+const LEGACY_STORAGE_KEY = "freshman-flu-forum";
 
 function isPost(x: unknown): x is Post {
   if (typeof x !== "object" || x === null) return false;
@@ -38,7 +39,9 @@ function isPost(x: unknown): x is Post {
 export function loadForumPosts(): Post[] {
   try {
     const parsed: unknown = JSON.parse(
-      localStorage.getItem(STORAGE_KEY) ?? "null",
+      localStorage.getItem(STORAGE_KEY) ??
+        localStorage.getItem(LEGACY_STORAGE_KEY) ??
+        "null",
     );
     return Array.isArray(parsed) && parsed.every(isPost) ? parsed : FORUM_SEED;
   } catch {
