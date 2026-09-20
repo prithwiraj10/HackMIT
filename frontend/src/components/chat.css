@@ -132,6 +132,8 @@
   font-size: 11px;
   color: var(--olive);
   font-weight: 600;
+  padding: 6px 0;
+  margin: -6px 0;
 }
 .chat-tool {
   margin-top: 6px;
