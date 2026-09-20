@@ -89,7 +89,7 @@ export default function Page() {
             across all 32 locations, then compare the outcomes side by side.
           </p>
           <Link className="landing-cta" href="/admin">
-            Sign in to the admin view <ArrowRight size={17} />
+            Open the admin view <ArrowRight size={17} />
           </Link>
         </div>
       </section>

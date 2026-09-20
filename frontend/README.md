@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. The landing page leads to the simulation via the student button (`/students`) or the password-gated admin button (`/admin`). No account or backend is needed for the simulation itself; without a Google Maps key, the bundled offline campus map is used automatically. Scenario state is held in memory and resets when the page reloads. Export a run to keep its parameters and results.
+Open http://127.0.0.1:3000. The landing page leads to the simulation via the student button (`/students`) and the student-support workspace via the admin button (`/admin`). No account or backend is needed for the simulation itself; without a Google Maps key, the bundled offline campus map is used automatically. Scenario state is held in memory and resets when the page reloads. Export a run to keep its parameters and results.
 
 ### Chat assistant
 

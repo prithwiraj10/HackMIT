@@ -12,10 +12,12 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@deepgram/agents": "^0.1.2",
     "@googlemaps/js-api-loader": "^2.1.1",
     "d3-geo": "3.1.1",
     "lucide-react": "1.47.0",
     "next": "16.3.5",
+    "pdf-parse": "^1.1.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

@@ -1,0 +1,404 @@
+/* Student support workspace. Every rule is scoped under .support so the
+   simulation dashboard and landing page keep their own styling. */
+
+.support .workspace {
+  padding-bottom: 40px;
+}
+.support .workspace > .panel + .panel,
+.support .workspace > .support-columns + .panel,
+.support .workspace > .panel + .support-columns {
+  margin-top: 22px;
+}
+.support-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--olive-light);
+  color: var(--olive);
+  padding: 8px 13px;
+  border-radius: 6px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.support-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.support-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.support-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+.support .panel-heading {
+  align-items: flex-start;
+}
+.support .panel-heading .button {
+  flex-shrink: 0;
+}
+.support .field-label:first-child {
+  margin-top: 0;
+}
+.support .panel-heading + .field-label,
+.support .panel-heading + .support-actions,
+.support .panel-heading + .support-chips {
+  margin-top: 0;
+}
+.support .text-input {
+  font: inherit;
+  resize: vertical;
+  display: block;
+}
+.support select.text-input {
+  appearance: auto;
+  padding: 10px 12px;
+}
+.support .text-input::placeholder {
+  color: #9aa394;
+}
+.support input[type="range"] {
+  margin: 2px 0 4px;
+}
+
+.support-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.support-chips button {
+  border: 1px solid #dde2d8;
+  background: #fff;
+  color: #667361;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.support-chips button:hover {
+  background: #f3f5ee;
+}
+.support-chips button.selected {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #fff;
+}
+
+.support-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 18px;
+}
+.support-actions + .status-message {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+.support .status-message + .field-label {
+  margin-top: 18px;
+}
+.support-file {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+.support-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.support-file:has(input:focus-visible) {
+  outline: 2px solid var(--olive);
+  outline-offset: 4px;
+}
+
+.support-credits {
+  font-size: 22px;
+  letter-spacing: -0.6px;
+  font-weight: 530;
+  color: var(--olive-dark);
+  white-space: nowrap;
+}
+
+.support-result {
+  background: var(--olive-light);
+  border: 1px solid #dbe5d5;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-top: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.support-result h3 {
+  font-size: 12px;
+  font-weight: 550;
+  margin: 14px 0 6px;
+}
+.support-result ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.support-result li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+}
+.support-result li svg {
+  color: #81936f;
+}
+.support-result small {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.support-guidance {
+  white-space: pre-wrap;
+}
+.support-email pre {
+  white-space: pre-wrap;
+  font: inherit;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid #dbe5d5;
+}
+.support-email + .support-email {
+  margin-top: 12px;
+}
+.support-disclaimer,
+.support-hint {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.support-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+.support-subhead {
+  font-size: 12px;
+  font-weight: 550;
+  margin: 20px 0 8px;
+}
+.support-subhead:first-of-type {
+  margin-top: 0;
+}
+
+.support-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.support-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+}
+.support-list li + li {
+  border-top: 1px solid var(--border);
+}
+.support-list strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+}
+.support-list small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 3px;
+}
+.support-list .button {
+  flex-shrink: 0;
+}
+
+.support-request {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 18px;
+}
+.support-amount {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+.support-amount .text-input {
+  margin-top: 6px;
+}
+.support-request .button {
+  height: 41px;
+}
+
+.support-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.support-calendar button {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  background: #fbfcf9;
+  border-radius: 7px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: #9ca891;
+  padding: 0;
+}
+.support-calendar button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.support-calendar button b {
+  font-size: 11px;
+  font-weight: 550;
+}
+.support-calendar button small {
+  font-size: 8px;
+  letter-spacing: 0.2px;
+}
+.support-calendar button.logged {
+  background: var(--olive-light);
+  border-color: #cfdcc6;
+  color: var(--olive-dark);
+}
+.support-calendar button.logged:hover,
+.support-calendar button[aria-pressed="true"] {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #fff;
+}
+.support-log-title {
+  margin-bottom: 8px;
+}
+
+.support-run {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.support-run h2 {
+  font-size: 13px;
+  font-weight: 550;
+}
+.support-run p {
+  color: #959e8f;
+  font-size: 10px;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+.support-post p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 8px 0 12px;
+}
+.support-reply {
+  color: var(--muted);
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.support-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.support-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.support-tool {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 18px;
+}
+.support-tool:hover {
+  border-color: #cfd7c6;
+  background: #fcfdf9;
+}
+.support-tool > span:not(.preset-icon) {
+  flex: 1;
+  min-width: 0;
+}
+.support-tool strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 550;
+}
+.support-tool p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.support-tool > svg {
+  color: #9ca891;
+}
+.support .experiment-note h3 {
+  font-size: 14px;
+  margin: 12px 0 8px;
+  font-weight: 550;
+}
+.support .experiment-note p {
+  font-size: 11px;
+  line-height: 1.7;
+}
+.support .experiment-note p + p {
+  margin-top: 8px;
+}
+.support-symptom-list {
+  color: #8a9a78;
+}
+
+@media (max-width: 1200px) {
+  .support-overview {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 960px) {
+  .support-columns,
+  .support-tools,
+  .support-grid {
+    grid-template-columns: 1fr;
+  }
+  .support-request {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .support .page-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .support-run {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
