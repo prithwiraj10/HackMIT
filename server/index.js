@@ -60,7 +60,21 @@ app.post('/api/academics/plan', async(req,res)=>{
   try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Academic Navigator for a sick student. Use only provided syllabus/policy and assignment info. Prioritize urgent work, tell who to contact, and draft concise emails. Never invent school policy. Return JSON with overview, urgent [{course,item,why,priority}], contacts [{course,who,why}], emails [{course,subject,body}].'},{role:'user',content:JSON.stringify({classes,illness,availability}).slice(0,30000)}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}catch{res.json(fallback)}
 })
 const env = key => (process.env[key] || '').trim()
-app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&env('TWILIO_PUBLIC_URL')),vapi:Boolean(env('VAPI_API_KEY')&&env('VAPI_PHONE_NUMBER_ID'))}))
+const E164=/^\+[1-9]\d{7,14}$/
+const PRIVATE_V4=/^(0\.|10\.|127\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|(22[4-9]|2[345]\d)\.)/
+const isLocalHost=hostname=>{
+  const host=hostname.toLowerCase().replace(/^\[|\]$/g,'')
+  if(host==='localhost'||host.endsWith('.localhost')||host.endsWith('.local')) return true
+  if(!host.includes(':')) return PRIVATE_V4.test(host)
+  if(host==='::'||host==='::1'||/^(f[cd]|fe[89ab])/.test(host)) return true
+  const dotted=host.match(/^::(?:ffff:)?((?:\d{1,3}\.){3}\d{1,3})$/)
+  if(dotted) return PRIVATE_V4.test(dotted[1])
+  const hex=host.match(/^::(?:ffff:)?([0-9a-f]{1,4}):([0-9a-f]{1,4})$/)
+  if(hex){ const n=(parseInt(hex[1],16)<<16)+parseInt(hex[2],16); return PRIVATE_V4.test([n>>>24,n>>>16&255,n>>>8&255,n&255].join('.')) }
+  return false
+}
+const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!isLocalHost(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
+app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL'))),vapiKey=Boolean(env('VAPI_API_KEY')),vapiPhoneNumber=Boolean(env('VAPI_PHONE_NUMBER_ID'));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl,vapiKey,vapiPhoneNumber,vapi:vapiKey&&vapiPhoneNumber})})
 app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
   if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
   if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
@@ -83,7 +97,7 @@ app.post('/api/vapi/call', async(req,res)=>{
   const context=String(text||'').slice(0,1600).trim()
   if(!context) return res.status(400).json({error:'Add what the voice agent should know before the call.'})
   const prompt=`You are Freshman Flu Voice Coach, a concise call assistant for a sick MIT student who may have a weak or lost voice. Help them communicate with campus health, a doctor's office, student services, a roommate, or a professor. Ask one question at a time. Keep spoken responses short. Do not diagnose, prescribe medication, give dosage, or claim to be a clinician. For urgent symptoms, advise contacting MIT Medical or emergency services. Student context: ${context}`
-  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
+  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId,assistantOverrides:{variableValues:{studentContext:context}}}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
   try{const r=await fetch('https://api.vapi.ai/call',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.message||d.error||'Vapi could not place the call.',details:d});res.json({ok:true,id:d.id,status:d.status})}
   catch(err){res.status(500).json({error:err.message||'Vapi call failed.'})}
 })
@@ -92,19 +106,20 @@ app.post('/api/call', async(req,res)=>{
   const accountSid = env('TWILIO_ACCOUNT_SID')
   const authToken = env('TWILIO_AUTH_TOKEN')
   const from = env('TWILIO_PHONE_NUMBER')
-  const publicUrl = env('TWILIO_PUBLIC_URL').replace(/\/$/,'')
+  const rawPublicUrl = env('TWILIO_PUBLIC_URL')
+  const publicUrl = publicBase(rawPublicUrl)
   if(!accountSid||!authToken) return res.status(503).json({error:'Add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to .env, then restart the server.'})
-  if(!/^\+[1-9]\d{7,14}$/.test(from)) return res.status(503).json({error:'Add TWILIO_PHONE_NUMBER to .env in E.164 format, e.g. +16175551212, then restart the server.'})
-  if(!publicUrl) return res.status(503).json({error:'Add TWILIO_PUBLIC_URL (your public HTTPS ngrok URL) to .env, then restart the server.'})
-  if(!/^https:\/\/[^ ]+$/i.test(publicUrl)) return res.status(503).json({error:'TWILIO_PUBLIC_URL must be a public HTTPS URL, e.g. https://your-name.ngrok-free.app'})
-  if(!/^\+[1-9]\d{7,14}$/.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
+  if(!E164.test(from)) return res.status(503).json({error:'Add TWILIO_PHONE_NUMBER to .env in E.164 format, e.g. +16175551212, then restart the server.'})
+  if(!rawPublicUrl) return res.status(503).json({error:'Add TWILIO_PUBLIC_URL (your public HTTPS ngrok URL) to .env, then restart the server.'})
+  if(!publicUrl) return res.status(503).json({error:'TWILIO_PUBLIC_URL must be an internet-reachable HTTPS base URL with no path, e.g. https://your-name.ngrok-free.app. localhost and private network addresses will not work because Twilio fetches this URL.'})
+  if(!E164.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
   const safeText=String(text||'').slice(0,1600)
   if(!safeText.trim()) return res.status(400).json({error:'Add the message you want the call to speak.'})
   try { const script=db.prepare('INSERT INTO call_scripts (text) VALUES (?)').run(safeText); const client=twilio(accountSid,authToken); const call=await client.calls.create({to,from,url:`${publicUrl}/api/twiml/${script.lastInsertRowid}`}); res.json({ok:true,sid:call.sid}) }
   catch(err){console.error('Twilio call failed', {status:err.status,code:err.code,message:err.message});res.status(400).json({error:err.message||'Twilio could not place the call.',code:err.code,status:err.status})}
 })
 const xmlEscape = text => String(text).replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]))
-app.all('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const publicUrl=env('TWILIO_PUBLIC_URL').replace(/\/$/,'');if(env('DEEPGRAM_API_KEY')&&publicUrl){const streamUrl=publicUrl.replace(/^https:/,'wss:').replace(/^http:/,'ws:');return res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">Connecting your voice assistant.</Say><Connect><Stream url="${streamUrl}/api/media/${req.params.id}" /></Connect></Response>`)}res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${xmlEscape(script.text)}</Say></Response>`)})
+app.all('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const publicUrl=publicBase(env('TWILIO_PUBLIC_URL'));if(env('DEEPGRAM_API_KEY')&&publicUrl){const streamUrl=publicUrl.replace(/^https:/,'wss:').replace(/^http:/,'ws:');return res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">Connecting your voice assistant.</Say><Connect><Stream url="${streamUrl}/api/media/${req.params.id}" /></Connect></Response>`)}res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${xmlEscape(script.text)}</Say></Response>`)})
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','dist'); app.use(express.static(root)); app.get('*',(_,res)=>res.sendFile(path.join(root,'index.html')))
 function agentSettings(context){
   return {type:'Settings',audio:{input:{encoding:'mulaw',sample_rate:8000},output:{encoding:'mulaw',sample_rate:8000,container:'none'}},agent:{language:'en',listen:{provider:{type:'deepgram',version:'v2',model:'flux-general-en'}},think:{provider:{type:'open_ai',model:'gpt-4o-mini',temperature:0.4},prompt:`You are Freshman Flu Voice Coach, a concise phone-call assistant for a sick MIT student. Help the student communicate clearly with campus health, a doctor's office, student services, a roommate, or a professor. Keep every spoken turn to one or two short sentences. Ask one question at a time. Do not diagnose, prescribe medication, give dosing, or claim to be a clinician. If symptoms sound urgent, advise contacting emergency services or MIT Medical. The student supplied this context before the call: ${context}`},speak:{provider:{type:'deepgram',version:'v2',model:'flux-alexis-en'}},greeting:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.'},tags:['freshman-flu','twilio','voice-agent']}
