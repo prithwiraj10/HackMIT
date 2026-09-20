@@ -173,7 +173,8 @@ function getRoomParameters(args: Record<string, unknown>) {
   const def = resolveBuilding(args.room_id);
   if (!def) return unknownBuilding(args.room_id);
   const scenario = getBaseline();
-  const end = scenario.snapshots[DAYS].buildings.find((b) => b.id === def.id)!;
+  const day = clampDay(args.day, DAYS);
+  const at = scenario.snapshots[day].buildings.find((b) => b.id === def.id)!;
   const outcome = buildingOutcome(scenario, def.id);
   return {
     id: def.id,
@@ -183,14 +184,15 @@ function getRoomParameters(args: Record<string, unknown>) {
     zone: def.zone,
     modeled_population: def.N,
     contact_multiplier: def.contact,
-    baseline_day_21: {
-      susceptible: Math.round(end.S),
-      exposed: Math.round(end.E),
-      infectious: Math.round(end.I),
-      isolated: Math.round(end.T),
-      recovered: Math.round(end.R),
-      ...outcome,
+    baseline_state: {
+      day,
+      susceptible: Math.round(at.S),
+      exposed: Math.round(at.E),
+      infectious: Math.round(at.I),
+      isolated: Math.round(at.T),
+      recovered: Math.round(at.R),
     },
+    baseline_outcome_by_day_21: outcome,
     tracked_room_parameters: [
       "population",
       "contact_multiplier",
@@ -431,13 +433,17 @@ export const TOOL_DEFS = [
     function: {
       name: "get_room_parameters",
       description:
-        "Return a building's modeled parameters (population, contact multiplier, type, zone) and its baseline outcome. Accepts a building id, MIT building number, or name.",
+        "Return a building's modeled parameters (population, contact multiplier, type, zone), its baseline SEITR compartment counts on a given day (default: day 21), and its baseline outcome. Accepts a building id, MIT building number, or name.",
       parameters: {
         type: "object",
         properties: {
           room_id: {
             type: "string",
             description: "Building id, code, or name.",
+          },
+          day: {
+            type: "integer",
+            description: `Simulation day (0–${DAYS}) for the compartment counts. Defaults to ${DAYS}.`,
           },
         },
         required: ["room_id"],

@@ -2296,10 +2296,15 @@ td small {
   top: auto;
   right: auto;
   left: 20px;
-  bottom: 110px;
+  bottom: 150px;
 }
 .map-stage:has(.location-glass) .map-attribution {
   right: 370px;
+}
+.map-stage:has(.location-glass) .map-legend {
+  left: 72px;
+  max-width: calc(100% - 430px);
+  transform: none;
 }
 .map-stage .map-legend {
   z-index: 3;
@@ -2651,5 +2656,10 @@ td small {
   }
   .map-stage:has(.location-glass) .map-attribution {
     right: 9px;
+  }
+  .map-stage:has(.location-glass) .map-legend {
+    left: 50%;
+    max-width: calc(100% - 180px);
+    transform: translateX(-50%);
   }
 }

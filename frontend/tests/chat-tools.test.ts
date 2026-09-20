@@ -69,6 +69,23 @@ test("get_room_parameters resolves names and reports untracked fields", () => {
   assert.ok((bad.result as { error: string }).error);
 });
 
+test("get_room_parameters reports compartments for the requested day", () => {
+  type State = {
+    baseline_state: { day: number; susceptible: number; recovered: number };
+  };
+  const day0 = runTool("get_room_parameters", { room_id: "maseeh", day: 0 })
+    .result as State;
+  assert.equal(day0.baseline_state.day, 0);
+  assert.equal(day0.baseline_state.recovered, 0);
+  const end = runTool("get_room_parameters", { room_id: "maseeh" })
+    .result as State;
+  assert.equal(end.baseline_state.day, 21);
+  assert.ok(end.baseline_state.susceptible < day0.baseline_state.susceptible);
+  const clamped = runTool("get_room_parameters", { room_id: "maseeh", day: 99 })
+    .result as State;
+  assert.equal(clamped.baseline_state.day, 21);
+});
+
 test("get_transmission_breakdown is explicit about airborne not being tracked", () => {
   const res = runTool("get_transmission_breakdown", { room_id: "maseeh" });
   const out = res.result as {
