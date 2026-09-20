@@ -6,7 +6,9 @@ import pdf from 'pdf-parse'
 import twilio from 'twilio'
 import path from 'node:path'
 import fs from 'node:fs'
+import http from 'node:http'
 import { fileURLToPath } from 'node:url'
+import { WebSocket, WebSocketServer } from 'ws'
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') })
 fs.mkdirSync('data',{recursive:true})
@@ -45,7 +47,7 @@ async function analyzeWithOpenAI(text){
 app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), async(req,res)=>{ try { const data=await pdf(req.body); res.json({text:data.text,analysis:await analyzeWithOpenAI(data.text)}); } catch {res.status(400).json({error:'Could not extract this PDF. Use the paste-text fallback.'})} })
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
 const env = key => (process.env[key] || '').trim()
-app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY'))}))
+app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&env('TWILIO_PUBLIC_URL'))}))
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
   const accountSid = env('TWILIO_ACCOUNT_SID')
@@ -62,6 +64,27 @@ app.post('/api/call', async(req,res)=>{
   try { const script=db.prepare('INSERT INTO call_scripts (text) VALUES (?)').run(safeText); const client=twilio(accountSid,authToken); const call=await client.calls.create({to,from,url:`${publicUrl}/api/twiml/${script.lastInsertRowid}`}); res.json({ok:true,sid:call.sid}) }
   catch(err){console.error('Twilio call failed', {status:err.status,code:err.code,message:err.message});res.status(400).json({error:err.message||'Twilio could not place the call.',code:err.code,status:err.status})}
 })
-app.all('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const spoken=script.text.replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]));res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${spoken}</Say></Response>`)})
+const xmlEscape = text => String(text).replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]))
+app.all('/api/twiml/:id',(req,res)=>{const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(req.params.id);if(!script)return res.status(404).type('text/xml').send('<Response><Say>Call script unavailable.</Say></Response>');const publicUrl=env('TWILIO_PUBLIC_URL').replace(/\/$/,'');if(env('DEEPGRAM_API_KEY')&&publicUrl){const streamUrl=publicUrl.replace(/^https:/,'wss:').replace(/^http:/,'ws:');return res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">Connecting your voice assistant.</Say><Connect><Stream url="${streamUrl}/api/media/${req.params.id}" /></Connect></Response>`)}res.type('text/xml').send(`<Response><Say voice="Polly.Joanna" language="en-US">${xmlEscape(script.text)}</Say></Response>`)})
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..','dist'); app.use(express.static(root)); app.get('*',(_,res)=>res.sendFile(path.join(root,'index.html')))
-app.listen(process.env.PORT||3001,()=>console.log('Freshman Flu running on http://localhost:3001'))
+function agentSettings(context){
+  return {type:'Settings',audio:{input:{encoding:'mulaw',sample_rate:8000},output:{encoding:'mulaw',sample_rate:8000,container:'none'}},agent:{language:'en',listen:{provider:{type:'deepgram',version:'v2',model:'flux-general-en'}},think:{provider:{type:'open_ai',model:'gpt-4o-mini',temperature:0.4},prompt:`You are Freshman Flu Voice Coach, a concise phone-call assistant for a sick MIT student. Help the student communicate clearly with campus health, a doctor's office, student services, a roommate, or a professor. Keep every spoken turn to one or two short sentences. Ask one question at a time. Do not diagnose, prescribe medication, give dosing, or claim to be a clinician. If symptoms sound urgent, advise contacting emergency services or MIT Medical. The student supplied this context before the call: ${context}`},speak:{provider:{type:'deepgram',version:'v2',model:'flux-alexis-en'}},greeting:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.'},tags:['freshman-flu','twilio','voice-agent']}
+}
+function bridgeMedia(twilioWs, scriptId){
+  const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(scriptId)
+  const dgKey=env('DEEPGRAM_API_KEY')
+  if(!script||!dgKey){twilioWs.close();return}
+  let streamSid='',dgReady=false,mark=0
+  const pending=[]
+  const dg=new WebSocket('wss://agent.deepgram.com/v1/agent/converse',{headers:{Authorization:`Token ${dgKey}`}})
+  const sendToTwilio = obj => { if(twilioWs.readyState===WebSocket.OPEN) twilioWs.send(JSON.stringify(obj)) }
+  const sendAudioToTwilio = data => { if(!streamSid)return;sendToTwilio({event:'media',streamSid,media:{payload:Buffer.from(data).toString('base64')}});sendToTwilio({event:'mark',streamSid,mark:{name:`dg-${++mark}`}}) }
+  dg.on('open',()=>{dgReady=true;dg.send(JSON.stringify(agentSettings(script.text)));while(pending.length)dg.send(pending.shift())})
+  dg.on('message',(data,isBinary)=>{if(isBinary)return sendAudioToTwilio(data);try{const msg=JSON.parse(data.toString());const type=msg.type||msg.event||'';if(type==='UserStartedSpeaking'||type==='User Started Speaking'||type==='AgentV1UserStartedSpeaking')sendToTwilio({event:'clear',streamSid});if(type==='ConversationText')console.log('Deepgram conversation:', msg.role, msg.content)}catch{}})
+  dg.on('error',err=>console.error('Deepgram voice agent failed', err.message))
+  twilioWs.on('message',raw=>{try{const msg=JSON.parse(raw.toString());if(msg.event==='start')streamSid=msg.start?.streamSid||msg.streamSid;if(msg.event==='media'){const audio=Buffer.from(msg.media.payload,'base64');dgReady&&dg.readyState===WebSocket.OPEN?dg.send(audio):pending.push(audio)}if(msg.event==='stop')dg.close()}catch(err){console.error('Twilio media bridge failed', err.message)}})
+  twilioWs.on('close',()=>{if(dg.readyState===WebSocket.OPEN||dg.readyState===WebSocket.CONNECTING)dg.close()})
+}
+const server=http.createServer(app), mediaServer=new WebSocketServer({noServer:true})
+server.on('upgrade',(req,socket,head)=>{const match=req.url?.match(/^\/api\/media\/(\d+)/);if(!match)return socket.destroy();mediaServer.handleUpgrade(req,socket,head,ws=>bridgeMedia(ws,match[1]))})
+server.listen(process.env.PORT||3001,()=>console.log('Freshman Flu running on http://localhost:3001'))
