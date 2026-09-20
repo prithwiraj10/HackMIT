@@ -1,3 +1,34 @@
+const MAX_COURSES = 12;
+const MAX_ASSIGNMENTS = 40;
+const MAX_SYLLABUS = 20_000;
+const MAX_FIELD = 200;
+const MAX_PAYLOAD = 250_000;
+
+const text = (value: unknown, max: number) =>
+  typeof value === "string" ? value.slice(0, max) : "";
+
+function boundCourse(raw: unknown) {
+  if (!raw || typeof raw !== "object") return null;
+  const c = raw as Record<string, unknown>;
+  const assignments = Array.isArray(c.assignments) ? c.assignments : [];
+  return {
+    course: text(c.course, MAX_FIELD),
+    professor: text(c.professor, MAX_FIELD),
+    professorEmail: text(c.professorEmail, MAX_FIELD),
+    syllabus: text(c.syllabus, MAX_SYLLABUS),
+    assignments: assignments
+      .slice(0, MAX_ASSIGNMENTS)
+      .filter((a) => a && typeof a === "object")
+      .map((a) => {
+        const item = a as Record<string, unknown>;
+        return {
+          name: text(item.name, MAX_FIELD),
+          dueAt: text(item.dueAt, MAX_FIELD),
+        };
+      }),
+  };
+}
+
 export async function POST(request: Request) {
   let body: { courses?: unknown; illness?: unknown; name?: unknown };
   try {
@@ -5,11 +36,17 @@ export async function POST(request: Request) {
   } catch {
     return Response.json({ error: "Expected course data." }, { status: 400 });
   }
-  if (!Array.isArray(body.courses))
+  if (!Array.isArray(body.courses) || !body.courses.length)
     return Response.json(
       { error: "Add at least one course." },
       { status: 400 },
     );
+  if (body.courses.length > MAX_COURSES)
+    return Response.json(
+      { error: `Triage supports up to ${MAX_COURSES} courses at a time.` },
+      { status: 413 },
+    );
+  const courses = body.courses.map(boundCourse).filter((c) => c !== null);
   if (!process.env.OPENAI_API_KEY)
     return Response.json(
       { error: "Set OPENAI_API_KEY to build an AI triage plan." },
@@ -21,6 +58,15 @@ export async function POST(request: Request) {
       : "The student is ill.";
   const name =
     typeof body.name === "string" ? body.name.slice(0, 120) : "Student";
+  const userContent = JSON.stringify({ illness, name, courses });
+  if (userContent.length > MAX_PAYLOAD)
+    return Response.json(
+      {
+        error:
+          "Course data is too large for one triage run. Shorten the pasted syllabus text or remove a course.",
+      },
+      { status: 413 },
+    );
   const prompt =
     "You are an Academic Navigator for a sick college student. Use ONLY the provided Canvas data and syllabus text. Never invent a policy, professor, deadline, or late penalty. Return valid JSON with: overview; priorities array, each {course,assignment,dueAt,priority,latePolicy,why}; missingPolicy array, each {course,whatIsMissing,questionToAsk}; emails array, each {course,professor,subject,body}. Include every upcoming assignment. Rank strict/no-makeup/nearer due work higher. For each email, write a completed, ready-to-send email addressed to the provided professor name, describe the student's illness generally, and explicitly ask about attendance/makeup paths where the supplied policy is missing or mandatory attendance is stated. If no instructor name exists, use 'Professor' only. Sign every email with the supplied student name.";
   try {
@@ -36,14 +82,7 @@ export async function POST(request: Request) {
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: prompt },
-          {
-            role: "user",
-            content: JSON.stringify({
-              illness,
-              name,
-              courses: body.courses,
-            }).slice(0, 60000),
-          },
+          { role: "user", content: userContent },
         ],
       }),
       signal: AbortSignal.timeout(45_000),

@@ -1,3 +1,5 @@
+const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
+
 export async function POST(request: Request) {
   const key = process.env.DEEPGRAM_API_KEY;
   if (!key)
@@ -5,7 +7,14 @@ export async function POST(request: Request) {
       { error: "Set DEEPGRAM_API_KEY in frontend/.env.local, then restart." },
       { status: 503 },
     );
+  const tooLarge = Response.json(
+    { error: "Voice clips are limited to 10 MB. Record a shorter clip." },
+    { status: 413 },
+  );
+  if (Number(request.headers.get("content-length")) > MAX_AUDIO_BYTES)
+    return tooLarge;
   const audio = await request.arrayBuffer();
+  if (audio.byteLength > MAX_AUDIO_BYTES) return tooLarge;
   if (!audio.byteLength)
     return Response.json(
       { error: "Record a short voice clip first." },

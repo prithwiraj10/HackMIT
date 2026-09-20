@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -74,7 +74,6 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 const STORAGE_KEY = "freshman-flu-checkins";
 
 function loadCheckIns(): CheckIn[] {
-  if (typeof window === "undefined") return [];
   try {
     const parsed: unknown = JSON.parse(
       localStorage.getItem(STORAGE_KEY) ?? "null",
@@ -87,8 +86,12 @@ function loadCheckIns(): CheckIn[] {
 
 export function SupportWorkspace() {
   const [tab, setTab] = useState<Tab>("home");
-  const [checkIns, setCheckIns] = useState<CheckIn[]>(loadCheckIns);
+  const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const main = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setCheckIns(loadCheckIns());
+  }, []);
 
   const navigate = (next: Tab) => {
     setTab(next);
