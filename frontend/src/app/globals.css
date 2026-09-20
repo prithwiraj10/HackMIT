@@ -647,6 +647,10 @@ h1 {
   box-shadow: 0 0 0 3px #ffffff99;
   z-index: 4;
 }
+.map-pin:hover,
+.map-pin:focus-visible {
+  z-index: 5;
+}
 .map-pin.selected .pin-dot {
   box-shadow: 0 0 0 3px #dee9dd;
 }
@@ -1791,7 +1795,7 @@ td small {
 .hotspot-list small,
 .source-row small,
 .chart-legend {
-  color: #626e63;
+  color: var(--muted);
 }
 .exposure-box p,
 .explanation p,
@@ -1820,7 +1824,7 @@ td small {
   color: #a34b38;
 }
 .trend-chart text {
-  fill: #626e63;
+  fill: var(--muted);
 }
 @media (min-width: 1650px) {
   .workspace {
@@ -2646,6 +2650,30 @@ td small {
 }
 .theme-dark .theme-toggle-icon {
   background: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .comparison-banner {
+  background: var(--olive-light);
+  border-color: #2b3a2c;
+}
+.theme-dark .comparison-banner .eyebrow,
+.theme-dark .comparison-banner p,
+.theme-dark .advanced-settings summary {
+  color: var(--muted);
+}
+.theme-dark .comparison-banner h2 {
+  color: var(--ink);
+}
+.theme-dark .explanation button,
+.theme-dark .source-links a {
+  color: var(--olive);
+}
+.theme-dark .pin-name,
+.theme-dark .skip-link {
+  background: #1b211c;
+  color: var(--ink);
+}
+.theme-dark .chat-launcher {
   color: #0e120f;
 }
 
