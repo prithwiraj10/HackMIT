@@ -287,7 +287,7 @@ function StudentSignIn({
             <Activity size={23} />
           </span>
           <span>
-            freshman<span className="brand-light">flu</span>
+            Flu<span className="brand-light">U</span>
             <small>STUDENT SUPPORT WORKSPACE</small>
           </span>
         </div>
