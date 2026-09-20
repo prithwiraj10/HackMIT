@@ -49,7 +49,7 @@ app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.
 const env = key => (process.env[key] || '').trim()
 const E164=/^\+[1-9]\d{7,14}$/
 const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
-app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioAccount:Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber:E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl:Boolean(publicBase(env('TWILIO_PUBLIC_URL'))),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&publicBase(env('TWILIO_PUBLIC_URL')))}))
+app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl})})
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
   const accountSid = env('TWILIO_ACCOUNT_SID')
