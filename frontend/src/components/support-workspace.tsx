@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   HeartPulse,
+  LogOut,
   MapPin,
   MessageCircle,
   Mic,
@@ -139,6 +140,10 @@ export function SupportWorkspace() {
           <Link className="button quiet" href="/students">
             <Activity size={16} />
             <span>Campus simulation</span>
+          </Link>
+          <Link className="button quiet" href="/" aria-label="Sign out of student workspace">
+            <LogOut size={16} />
+            <span>Sign out</span>
           </Link>
           <a
             className="github-link"
