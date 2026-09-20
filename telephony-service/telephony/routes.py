@@ -20,9 +20,9 @@ E164 = re.compile(r"^\+[1-9]\d{7,14}$")
 
 
 def _authorized(request: Request) -> bool:
-    if not ENDPOINT_SECRET:
-        return True
-    return request.headers.get("authorization") == f"Bearer {ENDPOINT_SECRET}"
+    return bool(ENDPOINT_SECRET) and request.headers.get(
+        "authorization"
+    ) == f"Bearer {ENDPOINT_SECRET}"
 
 
 async def make_call(request: Request) -> Response:

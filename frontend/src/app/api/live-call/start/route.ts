@@ -4,6 +4,11 @@ const MAX_BODY_BYTES = 8 * 1024;
 const serviceUrl = process.env.TELEPHONY_SERVICE_URL ?? "http://127.0.0.1:8080";
 
 export async function POST(request: Request) {
+  if (!process.env.TELEPHONY_ENDPOINT_SECRET)
+    return Response.json(
+      { error: "Set TELEPHONY_ENDPOINT_SECRET in .env.local before starting a live call." },
+      { status: 503 },
+    );
   let body: unknown;
   try {
     body = await readJsonBounded(request, MAX_BODY_BYTES);
