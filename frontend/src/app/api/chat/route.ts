@@ -31,6 +31,28 @@ Rules:
 // Per-session conversation history. In-memory for now; the Map boundary is
 // where Redis/DB persistence would slot in later.
 const sessions = new Map<string, Message[]>();
+const MAX_SESSIONS = 500;
+const SESSION_TTL_MS = 60 * 60 * 1000;
+const lastSeen = new Map<string, number>();
+
+function saveSession(id: string, history: Message[]) {
+  const now = Date.now();
+  for (const [key, seen] of lastSeen)
+    if (now - seen > SESSION_TTL_MS) {
+      sessions.delete(key);
+      lastSeen.delete(key);
+    }
+  sessions.delete(id);
+  lastSeen.delete(id);
+  while (sessions.size >= MAX_SESSIONS) {
+    const oldest = lastSeen.keys().next().value;
+    if (oldest === undefined) break;
+    sessions.delete(oldest);
+    lastSeen.delete(oldest);
+  }
+  sessions.set(id, trimmed(history));
+  lastSeen.set(id, now);
+}
 
 // Drop old turns without orphaning a tool result from the assistant call that
 // requested it — OpenAI rejects tool messages with no matching tool_calls.
@@ -139,7 +161,7 @@ export async function POST(request: Request) {
         });
       }
     }
-    sessions.set(sessionId, trimmed(history));
+    saveSession(sessionId, history);
     if (!reply)
       return Response.json(
         { error: "The assistant did not produce a final answer.", toolCalls },
@@ -147,7 +169,7 @@ export async function POST(request: Request) {
       );
     return Response.json({ reply, toolCalls, sessionId });
   } catch (err) {
-    sessions.set(sessionId, trimmed(history));
+    saveSession(sessionId, history);
     return Response.json(
       { error: err instanceof Error ? err.message : "Chat request failed." },
       { status: 502 },

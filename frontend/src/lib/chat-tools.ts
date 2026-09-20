@@ -346,13 +346,32 @@ export function runTool(
   args: Record<string, unknown>,
 ): ToolCallRecord {
   const fn = TOOLS[name];
-  const result = fn
-    ? fn(args)
-    : {
-        error: `Unknown tool "${name}". Available: ${Object.keys(TOOLS).join(", ")}.`,
+  let result: unknown;
+  if (!fn) {
+    result = {
+      error: `Unknown tool "${name}". Available: ${Object.keys(TOOLS).join(", ")}.`,
+    };
+  } else {
+    try {
+      result = fn(args);
+    } catch (err) {
+      result = {
+        error: err instanceof Error ? err.message : "Tool call failed.",
       };
+    }
+  }
   return { name, arguments: args, result };
 }
+
+const PARAM_RANGES: Record<(typeof PARAM_KEYS)[number], [number, number]> = {
+  beta: [0, 1.5],
+  incub: [0.5, 10],
+  inf: [0.5, 14],
+  iso: [0.5, 14],
+  fracT: [0, 1],
+  decay: [50, 1500],
+  cross: [0, 1],
+};
 
 const PARAM_SCHEMA = {
   type: "object" as const,
@@ -361,7 +380,9 @@ const PARAM_SCHEMA = {
       key,
       {
         type: "number",
-        description: `Override the global ${key} parameter (baseline ${BASELINE[key]}).`,
+        minimum: PARAM_RANGES[key][0],
+        maximum: PARAM_RANGES[key][1],
+        description: `Override the global ${key} parameter (baseline ${BASELINE[key]}, supported ${PARAM_RANGES[key][0]}–${PARAM_RANGES[key][1]}).`,
       },
     ]),
   ),
