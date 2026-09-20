@@ -47,7 +47,7 @@ async function analyzeWithOpenAI(text){
 app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), async(req,res)=>{ try { const data=await pdf(req.body); res.json({text:data.text,analysis:await analyzeWithOpenAI(data.text)}); } catch {res.status(400).json({error:'Could not extract this PDF. Use the paste-text fallback.'})} })
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
 const env = key => (process.env[key] || '').trim()
-app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&env('TWILIO_PUBLIC_URL'))}))
+app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&env('TWILIO_PUBLIC_URL')),vapi:Boolean(env('VAPI_API_KEY')&&env('VAPI_PHONE_NUMBER_ID'))}))
 app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
   if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
   if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
@@ -61,6 +61,18 @@ app.post('/api/lost-voice/compose', async(req,res)=>{
   if(!env('OPENAI_API_KEY')) return res.json(fallback)
   try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Lost Voice Relay for a student illness support demo. Convert rough typed or transcribed context into a short, speakable message the student can play aloud or show someone. Be practical, warm, and concise. Do not diagnose, prescribe, or give medical dosing. Return JSON with say, backup, keyPoints array.'},{role:'user',content:JSON.stringify({raw,audience,goal,tone})}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}
   catch{res.json(fallback)}
+})
+app.post('/api/vapi/call', async(req,res)=>{
+  const {to,text}=req.body
+  const token=env('VAPI_API_KEY'), phoneNumberId=env('VAPI_PHONE_NUMBER_ID'), assistantId=env('VAPI_ASSISTANT_ID')
+  if(!token||!phoneNumberId) return res.status(503).json({error:'Add VAPI_API_KEY and VAPI_PHONE_NUMBER_ID to .env, then restart the server.'})
+  if(!/^\+[1-9]\d{7,14}$/.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
+  const context=String(text||'').slice(0,1600).trim()
+  if(!context) return res.status(400).json({error:'Add what the voice agent should know before the call.'})
+  const prompt=`You are Freshman Flu Voice Coach, a concise call assistant for a sick MIT student who may have a weak or lost voice. Help them communicate with campus health, a doctor's office, student services, a roommate, or a professor. Ask one question at a time. Keep spoken responses short. Do not diagnose, prescribe medication, give dosage, or claim to be a clinician. For urgent symptoms, advise contacting MIT Medical or emergency services. Student context: ${context}`
+  const body={phoneNumberId,customer:{number:to},...(assistantId?{assistantId}:{assistant:{name:'Freshman Flu Voice Coach',firstMessage:'Hi, I am your Freshman Flu voice coach. Tell me who we are calling and what you need help saying.',transcriber:{provider:'deepgram',model:'nova-3'},voice:{provider:'deepgram',voiceId:'asteria'},model:{provider:'openai',model:'gpt-4o-mini',messages:[{role:'system',content:prompt}]}}})}
+  try{const r=await fetch('https://api.vapi.ai/call',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.message||d.error||'Vapi could not place the call.',details:d});res.json({ok:true,id:d.id,status:d.status})}
+  catch(err){res.status(500).json({error:err.message||'Vapi call failed.'})}
 })
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
