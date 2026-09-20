@@ -74,16 +74,20 @@ function bridgeMedia(twilioWs, scriptId){
   const script=db.prepare('SELECT text FROM call_scripts WHERE id=?').get(scriptId)
   const dgKey=env('DEEPGRAM_API_KEY')
   if(!script||!dgKey){twilioWs.close();return}
-  let streamSid='',dgReady=false,mark=0
+  console.log('Twilio media stream connected', {scriptId})
+  let streamSid='',dgReady=false,dgConfigured=false,mark=0
   const pending=[]
   const dg=new WebSocket('wss://agent.deepgram.com/v1/agent/converse',{headers:{Authorization:`Token ${dgKey}`}})
   const sendToTwilio = obj => { if(twilioWs.readyState===WebSocket.OPEN) twilioWs.send(JSON.stringify(obj)) }
   const sendAudioToTwilio = data => { if(!streamSid)return;sendToTwilio({event:'media',streamSid,media:{payload:Buffer.from(data).toString('base64')}});sendToTwilio({event:'mark',streamSid,mark:{name:`dg-${++mark}`}}) }
-  dg.on('open',()=>{dgReady=true;dg.send(JSON.stringify(agentSettings(script.text)));while(pending.length)dg.send(pending.shift())})
-  dg.on('message',(data,isBinary)=>{if(isBinary)return sendAudioToTwilio(data);try{const msg=JSON.parse(data.toString());const type=msg.type||msg.event||'';if(type==='UserStartedSpeaking'||type==='User Started Speaking'||type==='AgentV1UserStartedSpeaking')sendToTwilio({event:'clear',streamSid});if(type==='ConversationText')console.log('Deepgram conversation:', msg.role, msg.content)}catch{}})
+  const maybeStartDeepgram = () => { if(dgConfigured||!dgReady||!streamSid)return;dgConfigured=true;console.log('Deepgram voice agent configured', {streamSid});dg.send(JSON.stringify(agentSettings(script.text)));while(pending.length)dg.send(pending.shift()) }
+  dg.on('open',()=>{dgReady=true;console.log('Deepgram voice agent socket open');maybeStartDeepgram()})
+  dg.on('message',(data,isBinary)=>{if(isBinary)return sendAudioToTwilio(data);try{const msg=JSON.parse(data.toString());const type=msg.type||msg.event||'';if(type==='Error'||type==='Warning')console.log('Deepgram voice agent event', msg);if(type==='UserStartedSpeaking'||type==='User Started Speaking'||type==='AgentV1UserStartedSpeaking')sendToTwilio({event:'clear',streamSid});if(type==='ConversationText')console.log('Deepgram conversation:', msg.role, msg.content)}catch{}})
   dg.on('error',err=>console.error('Deepgram voice agent failed', err.message))
-  twilioWs.on('message',raw=>{try{const msg=JSON.parse(raw.toString());if(msg.event==='start')streamSid=msg.start?.streamSid||msg.streamSid;if(msg.event==='media'){const audio=Buffer.from(msg.media.payload,'base64');dgReady&&dg.readyState===WebSocket.OPEN?dg.send(audio):pending.push(audio)}if(msg.event==='stop')dg.close()}catch(err){console.error('Twilio media bridge failed', err.message)}})
-  twilioWs.on('close',()=>{if(dg.readyState===WebSocket.OPEN||dg.readyState===WebSocket.CONNECTING)dg.close()})
+  dg.on('close',(code,reason)=>{console.log('Deepgram voice agent closed', {code,reason:reason.toString()});if(twilioWs.readyState===WebSocket.OPEN)twilioWs.close()})
+  twilioWs.on('message',raw=>{try{const msg=JSON.parse(raw.toString());if(msg.event==='start'){streamSid=msg.start?.streamSid||msg.streamSid;console.log('Twilio media stream started', {streamSid});maybeStartDeepgram()}if(msg.event==='media'){const audio=Buffer.from(msg.media.payload,'base64');dgConfigured&&dg.readyState===WebSocket.OPEN?dg.send(audio):pending.push(audio)}if(msg.event==='stop'){console.log('Twilio media stream stopped');dg.close()}}catch(err){console.error('Twilio media bridge failed', err.message)}})
+  twilioWs.on('error',err=>console.error('Twilio media stream failed', err.message))
+  twilioWs.on('close',(code,reason)=>{console.log('Twilio media stream closed', {code,reason:reason.toString()});if(dg.readyState===WebSocket.OPEN||dg.readyState===WebSocket.CONNECTING)dg.close()})
 }
 const server=http.createServer(app), mediaServer=new WebSocketServer({noServer:true})
 server.on('upgrade',(req,socket,head)=>{const match=req.url?.match(/^\/api\/media\/(\d+)/);if(!match)return socket.destroy();mediaServer.handleUpgrade(req,socket,head,ws=>bridgeMedia(ws,match[1]))})
