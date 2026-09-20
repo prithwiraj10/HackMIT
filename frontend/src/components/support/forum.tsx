@@ -35,7 +35,10 @@ export function Forum() {
     setPosts((items) =>
       items.map((post) =>
         post.id === postId
-          ? { ...post, replies: [...post.replies, "You · MIT: " + replyDraft.trim()] }
+          ? {
+              ...post,
+              replies: [...post.replies, "You · MIT: " + replyDraft.trim()],
+            }
           : post,
       ),
     );
