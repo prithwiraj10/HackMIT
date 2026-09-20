@@ -26,6 +26,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { CampusMap } from "./campus-map";
 import { TrendChart } from "./trend-chart";
 import { LocationDetail } from "./location-detail";
@@ -105,14 +106,7 @@ export function Dashboard() {
         Skip to content
       </a>
       <header className="app-header">
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("simulation");
-          }}
-        >
+        <Link className="brand" href="/">
           <span className="brand-mark">
             <Activity size={22} />
           </span>
@@ -120,7 +114,7 @@ export function Dashboard() {
             freshman<span className="brand-light">flu</span>
             <small>CAMPUS SIMULATION LAB</small>
           </span>
-        </a>
+        </Link>
         <div className="header-context">
           <span className="divider" />
           <MapPin size={15} />
