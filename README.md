@@ -13,7 +13,11 @@ npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:3000. No API keys are required.
+Open http://127.0.0.1:3000. No API keys are required for the simulation.
+
+The "Ask the model" chat panel on `/simulation` answers questions with OpenAI
+function calling over real simulation runs; it needs `OPENAI_API_KEY` in
+`frontend/.env.local` (see `frontend/.env.example` and `frontend/README.md`).
 
 The current UI uses the repository's deterministic SEITR model and synthetic building populations. It includes a campus map, 21-day playback, building details, scenario parameters, and baseline comparisons. It does not yet implement individual agents or sponsor integrations.
 

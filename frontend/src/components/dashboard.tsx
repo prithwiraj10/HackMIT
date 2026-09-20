@@ -30,6 +30,7 @@ import {
 import { CampusMap } from "./campus-map";
 import { TrendChart } from "./trend-chart";
 import { LocationDetail } from "./location-detail";
+import { ChatPanel } from "./chat-panel";
 import {
   BASELINE,
   BUILDINGS,
@@ -520,6 +521,7 @@ export function Dashboard() {
         </footer>
       </main>
       {sources && <Sources onClose={() => setSources(false)} />}
+      <ChatPanel />
     </div>
   );
 }
