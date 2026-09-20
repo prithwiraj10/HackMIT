@@ -1,12 +1,24 @@
-import { TitleBar } from "@/components/title-bar";
+"use client";
 
-export const metadata = { title: "Students | Freshman Flu" };
+import { useState } from "react";
+import { Activity, BookOpen, CalendarDays, HeartPulse, Mic, ShoppingBag, Utensils, Volume2 } from "lucide-react";
+import "./students.css";
 
-export default function Page() {
-  return (
-    <div className="audience-page">
-      <TitleBar title="Students" />
-      <main />
-    </div>
-  );
+type Tab = "home" | "food" | "academics" | "voice" | "tracking";
+
+export default function StudentsPage() {
+  const [tab, setTab] = useState<Tab>("home");
+  const [logs, setLogs] = useState<string[]>([]);
+  const [note, setNote] = useState("");
+  const [speech, setSpeech] = useState("I’m not feeling well and need a moment to explain.");
+  const nav = [["home", "Overview", Activity], ["food", "Food support", Utensils], ["academics", "Academic triage", BookOpen], ["voice", "Lost voice", Mic], ["tracking", "Check-ins", CalendarDays]] as const;
+  const say = () => window.speechSynthesis?.speak(new SpeechSynthesisUtterance(speech));
+  return <div className="student-shell"><header><a href="/"><span><HeartPulse size={20}/></span> freshman<strong>flu</strong></a><small><i/> Student support workspace · MIT</small></header><aside><b>STUDENT WORKSPACE</b>{nav.map(([id,label,Icon])=><button className={tab===id?"active":""} onClick={()=>setTab(id)} key={id}><Icon size={17}/>{label}</button>)}<p>General support only.<br/>Not medical advice.</p></aside><main>
+    {tab==="home"&&<><section className="hero"><b>STUDENT SUPPORT</b><h1>Make a sick day more manageable.</h1><p>Understand what can wait, communicate clearly, and ask for practical support.</p></section><div className="cards">{[["Academic triage","Policy risk and deadlines first","academics",BookOpen],["Food support","Gentle options and a pickup board","food",Utensils],["Lost voice","Let your computer help speak","voice",Mic]].map(([title,copy,id,Icon])=><button onClick={()=>setTab(id as Tab)} key={title as string}><Icon size={21}/><h2>{title}</h2><p>{copy}</p></button>)}</div></>}
+    {tab==="food"&&<><Title tag="FOOD COORDINATOR" title="Food ideas that match your energy."/><section className="panel"><div className="chips">{["Sore throat","Stomach upset","Fatigue","Fever",...(logs.length?["Use today’s check-in"]:[])].map(x=><button key={x}>{x}</button>)}</div><h2>Simple, low-effort choices</h2><p>Soup, oatmeal, tea, rice, toast, fruit, and smoothies are gentle starting points. This is general food support only.</p><button className="primary">Recommend nearby food</button></section><section className="panel"><div className="row"><div><b>PEER SUPPORT</b><h2>Food run board</h2></div><button className="primary"><ShoppingBag size={15}/> Ask for a pickup</button></div><p>Post a request for a volunteer to claim with mock credits.</p></section></>}
+    {tab==="academics"&&<><Title tag="ACADEMIC NAVIGATOR" title="Know which class cannot wait."/><section className="panel"><div className="row"><div><h2>Canvas course snapshot</h2><p>Read-only import of active courses, syllabus text, and dated assignments.</p></div><button className="primary">Import from Canvas</button></div>{["3.091 Intro to Solid-State Chemistry","6.1200 Math for Computer Science","8.02 Physics II"].map(x=><article className="course" key={x}><div><strong>{x}</strong><small>Review attendance, makeup, and deadline policy</small></div><span>Policy check</span><button>Parse syllabus PDF</button></article>)}</section><section className="panel"><b>SICK-DAY TRIAGE</b><h2>Email first; catch up second.</h2><p>Turn policy text and assignment dates into a strict-to-flexible priority order and concise professor emails.</p><button className="primary">Build my triage plan</button></section></>}
+    {tab==="voice"&&<><Title tag="LOST VOICE" title="Let your computer help speak."/><section className="panel"><b>WHISPER-TO-LOUD</b><h2>Draft a clear message.</h2><textarea rows={5} value={speech} onChange={e=>setSpeech(e.target.value)}/><button className="primary" onClick={say}><Volume2 size={15}/> Speak aloud</button></section><section className="panel"><b>PHONE CALL PROXY</b><h2>Your phone makes the call; your computer helps answer.</h2><p>Put a call on speaker, let Deepgram transcribe the caller, then play a short generated reply.</p><button className="primary"><Mic size={15}/> Listen to caller</button></section></>}
+    {tab==="tracking"&&<><Title tag="CHECK-INS" title="A small log can make a hard day clearer."/><section className="panel"><h2>New check-in</h2><div className="chips">{["Sore throat","Stomach upset","Fatigue","Fever"].map(x=><button key={x}>{x}</button>)}</div><textarea rows={4} placeholder="Optional symptom summary" value={note} onChange={e=>setNote(e.target.value)}/><button className="primary" onClick={()=>{setLogs([...logs,note||"Check-in saved"]);setNote("")}}>Save another check-in</button></section><section className="panel"><b>TODAY'S LOGS</b>{logs.length?logs.map((x,i)=><article className="log" key={i}>{x}</article>):<p>No check-ins yet.</p>}</section></>}
+  </main></div>;
 }
+function Title({tag,title}:{tag:string;title:string}){return <section className="title"><b>{tag}</b><h1>{title}</h1><p>Designed around the practical decisions a sick MIT student needs to make.</p></section>}
