@@ -25,6 +25,7 @@ import { CheckIns } from "./support/check-ins";
 import { FoodSupport } from "./support/food-support";
 import { Forum } from "./support/forum";
 import { LostVoice } from "./support/lost-voice";
+import { ThemeToggle } from "./theme-toggle";
 import "./support.css";
 
 type Tab = "home" | "food" | "academics" | "voice" | "tracking" | "forum";
@@ -140,6 +141,7 @@ export function SupportWorkspace() {
             <Activity size={16} />
             <span>Campus simulation</span>
           </Link>
+          <ThemeToggle />
           <a
             className="github-link"
             href="https://github.com/prithwiraj10/HackMIT"

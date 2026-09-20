@@ -2596,6 +2596,58 @@ td small {
 .theme-dark .timeline-slider::-webkit-slider-thumb {
   border-color: var(--surface);
 }
+.theme-dark .button:hover {
+  background: #232b24;
+}
+.theme-dark .button {
+  border-color: var(--border);
+}
+.theme-dark .button.quiet {
+  background: transparent;
+  border-color: transparent;
+}
+.theme-dark .button.primary {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .button.primary:hover {
+  background: var(--olive-dark);
+}
+.theme-dark .header-context,
+.theme-dark .breadcrumb,
+.theme-dark .presets button > svg {
+  color: var(--muted);
+}
+.theme-dark .scenario-select {
+  background: var(--surface);
+  color: var(--muted);
+}
+.theme-dark .sidebar-note,
+.theme-dark .preset-icon,
+.theme-dark .experiment-note {
+  background: var(--olive-light);
+  border-color: #2b3a2c;
+}
+.theme-dark .sidebar-note > svg,
+.theme-dark .preset-icon,
+.theme-dark .sidebar-note button,
+.theme-dark .experiment-note {
+  color: var(--olive);
+}
+.theme-dark .sidebar-note > span,
+.theme-dark .experiment-note p {
+  color: var(--muted);
+}
+.theme-dark .text-input {
+  background: #121713;
+  border-color: var(--border);
+  color: var(--ink);
+}
+.theme-dark .theme-toggle-icon {
+  background: var(--olive);
+  color: #0e120f;
+}
 
 @media (max-width: 1200px) {
   .location-glass {

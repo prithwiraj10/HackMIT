@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { ArrowRight, Activity } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "./landing.css";
 
 const display = Fraunces({
@@ -26,6 +27,7 @@ export default function Page() {
         <div className="landing-switch">
           <a href="#students">Students</a>
           <a href="#admin">Admin</a>
+          <ThemeToggle className="landing-theme" />
         </div>
       </nav>
 

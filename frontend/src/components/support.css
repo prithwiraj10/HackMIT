@@ -377,6 +377,54 @@
   color: #8a9a78;
 }
 
+/* Dark mode: shares the simulation's tokens (set on <html> by .theme-dark). */
+.theme-dark .support .text-input::placeholder,
+.theme-dark .support-run p,
+.theme-dark .support-tool > svg,
+.theme-dark .support-symptom-list {
+  color: var(--muted);
+}
+.theme-dark .support-chips button {
+  background: #1b211c;
+  border-color: var(--border);
+  color: var(--ink);
+}
+.theme-dark .support-chips button:hover {
+  background: #232b24;
+}
+.theme-dark .support-chips button.selected {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .support-result {
+  border-color: #2b3a2c;
+}
+.theme-dark .support-result li svg {
+  color: var(--olive);
+}
+.theme-dark .support-email pre {
+  border-top-color: #2b3a2c;
+}
+.theme-dark .support-calendar button {
+  background: #121713;
+  color: var(--muted);
+}
+.theme-dark .support-calendar button.logged {
+  border-color: #2b3a2c;
+  color: var(--olive);
+}
+.theme-dark .support-calendar button.logged:hover,
+.theme-dark .support-calendar button[aria-pressed="true"] {
+  background: var(--olive);
+  border-color: var(--olive);
+  color: #0e120f;
+}
+.theme-dark .support-tool:hover {
+  border-color: #2b3a2c;
+  background: #1b211c;
+}
+
 @media (max-width: 1200px) {
   .support-overview {
     grid-template-columns: 1fr;

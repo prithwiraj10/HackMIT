@@ -107,6 +107,21 @@ html {
 .landing-switch a:hover::after {
   transform: scaleX(1);
 }
+.landing .theme-toggle.landing-theme {
+  margin-left: clamp(4px, 1vw, 12px);
+  border-color: rgba(244, 247, 240, 0.35);
+  background: transparent;
+  color: var(--on-green);
+  box-shadow: none;
+}
+.landing .theme-toggle.landing-theme:hover {
+  border-color: var(--on-green);
+  background: rgba(244, 247, 240, 0.1);
+}
+.landing .landing-theme .theme-toggle-icon {
+  background: var(--on-green);
+  color: var(--green);
+}
 
 /* Hero */
 .landing-hero {
@@ -302,6 +317,48 @@ html {
   text-decoration-color: transparent;
 }
 
+/* Dark mode: the same deep-forest palette as the dashboard's .theme-dark. */
+.theme-dark .landing {
+  --green: #0f1511;
+  --green-deep: #202b21;
+  --on-green: #edf1ec;
+  --on-green-soft: rgba(237, 241, 236, 0.78);
+  --cream: #171e18;
+  --ink: #edf1ec;
+  --ink-soft: rgba(237, 241, 236, 0.72);
+  --night: #090c0a;
+  --night-soft: rgba(237, 241, 236, 0.7);
+}
+.theme-dark .landing ::selection {
+  background: var(--night-accent);
+  color: var(--night);
+}
+.theme-dark .landing-section.students :focus-visible {
+  outline-color: var(--night-accent);
+}
+.theme-dark .hero-actions .solid,
+.theme-dark .landing-cta {
+  background: var(--on-green);
+  color: #0f1511;
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.7);
+}
+.theme-dark .hero-actions .solid:hover,
+.theme-dark .landing-cta:hover {
+  background: var(--night-accent);
+  color: #0f1511;
+}
+.theme-dark .hero-actions .ghost:hover {
+  color: #0f1511;
+}
+.theme-dark .landing-section.students {
+  border-top: 1px solid #222c24;
+  border-bottom: 1px solid #222c24;
+}
+.theme-dark .landing .landing-theme .theme-toggle-icon {
+  background: var(--night-accent);
+  color: var(--night);
+}
+
 @media (max-width: 900px) {
   .landing-hero {
     grid-template-columns: minmax(0, 1fr);
@@ -325,6 +382,18 @@ html {
   }
   .landing-switch a {
     font-size: 14px;
+  }
+  .landing .theme-toggle.landing-theme {
+    margin-left: 0;
+    padding: 4px;
+    gap: 0;
+  }
+  .landing .theme-toggle.landing-theme > span:last-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .landing-brand {
     font-size: 20px;
