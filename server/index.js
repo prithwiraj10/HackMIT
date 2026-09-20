@@ -48,6 +48,20 @@ app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), as
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
 const env = key => (process.env[key] || '').trim()
 app.get('/api/config', (_,res)=>res.json({deepgram:Boolean(env('DEEPGRAM_API_KEY')),openai:Boolean(env('OPENAI_API_KEY')),twilioVoiceAgent:Boolean(env('DEEPGRAM_API_KEY')&&env('TWILIO_PUBLIC_URL'))}))
+app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
+  if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
+  if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
+  try{const r=await fetch('https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&language=en',{method:'POST',headers:{Authorization:`Token ${env('DEEPGRAM_API_KEY')}`,'Content-Type':req.headers['content-type']||'audio/webm'},body:req.body});const d=await r.json();if(!r.ok)return res.status(r.status).json({error:d.err_msg||d.message||'Deepgram could not transcribe this recording.'});const transcript=d.results?.channels?.[0]?.alternatives?.[0]?.transcript||'';res.json({transcript,confidence:d.results?.channels?.[0]?.alternatives?.[0]?.confidence})}
+  catch(err){res.status(500).json({error:err.message||'Transcription failed.'})}
+})
+app.post('/api/lost-voice/compose', async(req,res)=>{
+  const {raw,audience,goal,tone}=req.body
+  if(!String(raw||'').trim()) return res.status(400).json({error:'Add what you need to communicate first.'})
+  const fallback={say:`Hi, I am not feeling well and my voice is limited. ${raw}`.slice(0,500),backup:'Could you please give me a moment or let me type the rest?',keyPoints:['Keep it short','Ask for the specific help you need','Use MIT Medical or emergency services for urgent symptoms']}
+  if(!env('OPENAI_API_KEY')) return res.json(fallback)
+  try{const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{Authorization:`Bearer ${env('OPENAI_API_KEY')}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini',response_format:{type:'json_object'},messages:[{role:'system',content:'You are Lost Voice Relay for a student illness support demo. Convert rough typed or transcribed context into a short, speakable message the student can play aloud or show someone. Be practical, warm, and concise. Do not diagnose, prescribe, or give medical dosing. Return JSON with say, backup, keyPoints array.'},{role:'user',content:JSON.stringify({raw,audience,goal,tone})}]})});const d=await r.json();res.json(JSON.parse(d.choices?.[0]?.message?.content)||fallback)}
+  catch{res.json(fallback)}
+})
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
   const accountSid = env('TWILIO_ACCOUNT_SID')
