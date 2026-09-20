@@ -1,4 +1,5 @@
 import { TOOL_DEFS, runTool, type ToolCallRecord } from "@/lib/chat-tools";
+import { BodyTooLarge, readJsonBounded } from "@/lib/bounded-body";
 
 type OpenAIToolCall = {
   id: string;
@@ -16,6 +17,8 @@ const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 const MAX_ROUNDS = 6;
 const MAX_HISTORY = 24;
 const MAX_MESSAGE = 4000;
+// message (UTF-8 worst case) + sessionId + JSON framing.
+const MAX_BODY_BYTES = 32 * 1024;
 
 const SYSTEM_PROMPT = `You are the analysis assistant for a deterministic SEITR epidemic simulation of a fictional flu outbreak across 32 MIT campus buildings (8,515 modeled people, 21 days, baseline parameters beta=0.45, incub=2d, inf=3d, iso=5d, fracT=0.6, decay=350m, cross=0.25).
 
@@ -118,8 +121,16 @@ export async function POST(request: Request) {
     );
   let payload: { message?: unknown; sessionId?: unknown };
   try {
-    payload = await request.json();
-  } catch {
+    const parsed = await readJsonBounded(request, MAX_BODY_BYTES);
+    if (!parsed || typeof parsed !== "object")
+      return Response.json({ error: "Expected a JSON body." }, { status: 400 });
+    payload = parsed;
+  } catch (err) {
+    if (err instanceof BodyTooLarge)
+      return Response.json(
+        { error: `message is limited to ${MAX_MESSAGE} characters.` },
+        { status: 413 },
+      );
     return Response.json({ error: "Expected a JSON body." }, { status: 400 });
   }
   const message = payload.message;
