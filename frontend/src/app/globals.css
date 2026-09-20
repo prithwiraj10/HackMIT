@@ -771,6 +771,122 @@ h1 {
   color: #7d8d73;
   font-size: 8px;
 }
+.google-campus-map {
+  background: #05080d;
+  cursor: default;
+  min-height: 560px;
+}
+.google-map-host,
+.google-map-element {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.google-map-host {
+  background:
+    radial-gradient(circle at 55% 46%, #153050 0, #07111e 34%, #020409 70%),
+    #020409;
+}
+.google-map-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 9px;
+  color: #f5f7f2;
+  text-align: center;
+  background: radial-gradient(circle, #17283a 0, #05080d 58%);
+}
+.google-map-loading svg {
+  color: #9db68c;
+  animation: globe-pulse 1.6s ease-in-out infinite;
+}
+.google-map-loading strong {
+  font-size: 13px;
+  font-weight: 550;
+}
+.google-map-loading span {
+  color: #a9b5bd;
+  font-size: 10px;
+}
+.google-map-label {
+  color: #f5f7f2;
+  background: #081017d9;
+  border: 1px solid #ffffff1a;
+  backdrop-filter: blur(12px);
+}
+.google-map-label .eyebrow,
+.google-map-label > span:last-child {
+  color: #d8e1d2;
+}
+.google-map-legend {
+  color: #d1dbd2;
+  background: #081017df;
+  border-color: #ffffff1c;
+  backdrop-filter: blur(12px);
+}
+.google-map-legend > span {
+  color: #f2f5ee;
+}
+.google-map-reset {
+  position: absolute;
+  z-index: 4;
+  right: 15px;
+  top: 17px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 11px;
+  border: 1px solid #ffffff26;
+  border-radius: 6px;
+  color: #f3f6ef;
+  background: #071018db;
+  box-shadow: 0 8px 24px #00000026;
+  backdrop-filter: blur(12px);
+  font-size: 10px;
+  font-weight: 550;
+}
+.google-map-reset:hover {
+  background: #17261d;
+}
+.map-fallback-shell {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 430px;
+}
+.map-fallback-shell > .campus-map {
+  width: 100%;
+}
+.google-map-error {
+  position: absolute;
+  z-index: 8;
+  right: 14px;
+  top: 14px;
+  display: grid;
+  gap: 4px;
+  max-width: 310px;
+  padding: 11px 13px;
+  border: 1px solid #d8aa8f;
+  border-radius: 7px;
+  color: #784c38;
+  background: #fff7f1f2;
+  box-shadow: 0 8px 30px #3b24161a;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.google-map-error strong {
+  font-size: 10px;
+}
+@keyframes globe-pulse {
+  50% {
+    transform: scale(1.12);
+    opacity: 0.65;
+  }
+}
 .timeline {
   padding: 17px 22px 13px;
   background: #fff;
@@ -1922,6 +2038,16 @@ td small {
   }
   .campus-map {
     min-height: 370px;
+  }
+  .google-campus-map {
+    min-height: 480px;
+  }
+  .google-map-reset {
+    top: 12px;
+    right: 10px;
+  }
+  .google-map-label {
+    top: 12px;
   }
   .location-detail {
     border-left: 0;
