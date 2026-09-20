@@ -69,6 +69,20 @@ test("get_room_parameters resolves names and reports untracked fields", () => {
   assert.ok((bad.result as { error: string }).error);
 });
 
+test("get_room_parameters resolves punctuated display names", () => {
+  for (const room_id of [
+    "Burton-Conner House",
+    "Building 7 (Lobby 7)",
+    "Building 14 (Hayden / Humanities)",
+    "burton conner",
+  ]) {
+    const res = runTool("get_room_parameters", { room_id });
+    const out = res.result as { name?: string; error?: string };
+    assert.equal(out.error, undefined, room_id);
+    assert.ok(out.name, room_id);
+  }
+});
+
 test("get_room_parameters reports compartments for the requested day", () => {
   type State = {
     baseline_state: { day: number; susceptible: number; recovered: number };

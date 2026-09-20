@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, Volume2 } from "lucide-react";
 import { DEEPGRAM_VOICES, recognizeSpeech } from "@/lib/support-data";
 
@@ -87,7 +87,14 @@ function CallProxy() {
   const [recording, setRecording] = useState(false);
   const [voice, setVoice] = useState(DEEPGRAM_VOICES[0].id);
   const recorder = useRef<MediaRecorder | null>(null);
+  const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
+
+  const releaseMic = () => {
+    stream.current?.getTracks().forEach((t) => t.stop());
+    stream.current = null;
+  };
+  useEffect(() => releaseMic, []);
 
   const speak = async (text: string) => {
     setStatus("Deepgram is speaking…");
@@ -148,12 +155,14 @@ function CallProxy() {
       return;
     }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const r = new MediaRecorder(stream);
+      stream.current = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+      const r = new MediaRecorder(stream.current);
       chunks.current = [];
       r.ondataavailable = (e) => chunks.current.push(e.data);
       r.onstop = async () => {
-        stream.getTracks().forEach((t) => t.stop());
+        releaseMic();
         setRecording(false);
         setStatus("Deepgram is transcribing the caller…");
         try {
@@ -184,6 +193,7 @@ function CallProxy() {
       setRecording(true);
       setStatus("Listening to caller — press Stop listening when they finish.");
     } catch {
+      releaseMic();
       setStatus(
         "Microphone access was not granted. Type the caller’s words instead.",
       );

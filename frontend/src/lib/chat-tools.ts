@@ -35,22 +35,28 @@ const PARAM_KEYS = [
 const NOT_TRACKED_NOTE =
   "The SEITR model does not distinguish transmission modes (contact/fomite vs airborne), ventilation rates, or per-room mask compliance — it only tracks aggregate compartments plus the split between within-building and between-building exposure pressure.";
 
+function normalizeName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function resolveBuilding(query: unknown) {
   if (typeof query !== "string" || !query.trim()) return null;
-  const q = query
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ");
+  const raw = query.trim().toLowerCase();
+  const q = normalizeName(query);
+  if (!q) return null;
   const exact = BUILDINGS.find(
     (b) =>
-      b.id === query.trim().toLowerCase() ||
-      b.code.toLowerCase() === query.trim().toLowerCase() ||
-      b.name.toLowerCase() === q,
+      b.id === raw ||
+      b.code.toLowerCase() === raw ||
+      normalizeName(b.name) === q,
   );
   if (exact) return exact;
   return (
-    BUILDINGS.find((b) => b.name.toLowerCase().includes(q)) ??
-    BUILDINGS.find((b) => q.includes(b.name.toLowerCase())) ??
+    BUILDINGS.find((b) => normalizeName(b.name).includes(q)) ??
+    BUILDINGS.find((b) => q.includes(normalizeName(b.name))) ??
     null
   );
 }
