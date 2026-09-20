@@ -74,7 +74,7 @@ const isLocalHost=hostname=>{
   return false
 }
 const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!isLocalHost(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
-app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl,vapi:Boolean(env('VAPI_API_KEY')&&env('VAPI_PHONE_NUMBER_ID'))})})
+app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL'))),vapiKey=Boolean(env('VAPI_API_KEY')),vapiPhoneNumber=Boolean(env('VAPI_PHONE_NUMBER_ID'));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl,vapiKey,vapiPhoneNumber,vapi:vapiKey&&vapiPhoneNumber})})
 app.post('/api/lost-voice/transcribe', express.raw({type:'audio/*',limit:'12mb'}), async(req,res)=>{
   if(!env('DEEPGRAM_API_KEY')) return res.status(503).json({error:'Add DEEPGRAM_API_KEY to .env to use whisper transcription.'})
   if(!req.body?.length) return res.status(400).json({error:'Record a short voice note first.'})
