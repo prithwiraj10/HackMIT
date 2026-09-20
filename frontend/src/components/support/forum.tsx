@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
 
-type Post = { id: number; author: string; body: string; replies: string[] };
+export type Post = {
+  id: number;
+  author: string;
+  body: string;
+  replies: string[];
+};
 
-const SEED: Post[] = [
+export const FORUM_SEED: Post[] = [
   {
     id: 1,
     author: "Maya · East Campus",
@@ -30,39 +35,39 @@ function isPost(x: unknown): x is Post {
   );
 }
 
-function loadPosts(): Post[] {
+export function loadForumPosts(): Post[] {
   try {
     const parsed: unknown = JSON.parse(
       localStorage.getItem(STORAGE_KEY) ?? "null",
     );
-    return Array.isArray(parsed) && parsed.every(isPost) ? parsed : SEED;
+    return Array.isArray(parsed) && parsed.every(isPost) ? parsed : FORUM_SEED;
   } catch {
-    return SEED;
+    return FORUM_SEED;
   }
 }
 
-export function Forum() {
-  const [posts, setPosts] = useState<Post[]>(SEED);
+export function storeForumPosts(posts: Post[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  } catch {
+    // storage blocked or full: posts live in workspace state for this visit
+  }
+}
+
+export function Forum({
+  posts,
+  onChange,
+}: {
+  posts: Post[];
+  onChange: (posts: Post[]) => void;
+}) {
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
 
-  useEffect(() => {
-    setPosts(loadPosts());
-  }, []);
-
-  const save = (next: Post[]) => {
-    setPosts(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // storage blocked or full: keep the post in memory for this visit
-    }
-  };
-
   const submit = () => {
     if (!draft.trim()) return;
-    save([
+    onChange([
       ...posts,
       { id: Date.now(), author: "You · MIT", body: draft.trim(), replies: [] },
     ]);
@@ -70,7 +75,7 @@ export function Forum() {
   };
   const submitReply = (postId: number) => {
     if (!replyDraft.trim()) return;
-    save(
+    onChange(
       posts.map((post) =>
         post.id === postId
           ? {

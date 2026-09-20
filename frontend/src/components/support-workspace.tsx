@@ -23,7 +23,13 @@ import { SYMPTOMS, type CheckIn } from "@/lib/support-data";
 import { AcademicTriage } from "./support/academic-triage";
 import { CheckIns } from "./support/check-ins";
 import { FoodSupport } from "./support/food-support";
-import { Forum } from "./support/forum";
+import {
+  FORUM_SEED,
+  Forum,
+  loadForumPosts,
+  storeForumPosts,
+  type Post,
+} from "./support/forum";
 import { LostVoice } from "./support/lost-voice";
 import { ThemeToggle } from "./theme-toggle";
 import "./support.css";
@@ -88,10 +94,12 @@ function loadCheckIns(): CheckIn[] {
 export function SupportWorkspace() {
   const [tab, setTab] = useState<Tab>("home");
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [posts, setPosts] = useState<Post[]>(FORUM_SEED);
   const main = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setCheckIns(loadCheckIns());
+    setPosts(loadForumPosts());
   }, []);
 
   const navigate = (next: Tab) => {
@@ -102,6 +110,10 @@ export function SupportWorkspace() {
     const next = [...checkIns, item];
     setCheckIns(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  };
+  const savePosts = (next: Post[]) => {
+    setPosts(next);
+    storeForumPosts(next);
   };
 
   const todayKey = new Date().toLocaleDateString("en-CA");
@@ -213,7 +225,7 @@ export function SupportWorkspace() {
         {tab === "tracking" && (
           <CheckIns checkIns={checkIns} onSave={saveCheckIn} />
         )}
-        {tab === "forum" && <Forum />}
+        {tab === "forum" && <Forum posts={posts} onChange={savePosts} />}
       </main>
     </div>
   );
