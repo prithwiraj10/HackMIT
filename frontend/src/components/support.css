@@ -320,6 +320,11 @@
   padding-left: 12px;
   border-left: 2px solid var(--border);
 }
+.forum-reply-form {
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+  padding-top: 14px;
+}
 
 .support-overview {
   display: grid;

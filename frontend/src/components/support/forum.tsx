@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { MessageCircle, Send } from "lucide-react";
 
 type Post = { id: number; author: string; body: string; replies: string[] };
 
@@ -19,6 +19,8 @@ const SEED: Post[] = [
 export function Forum() {
   const [posts, setPosts] = useState<Post[]>(SEED);
   const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const [replyDraft, setReplyDraft] = useState("");
 
   const submit = () => {
     if (!draft.trim()) return;
@@ -27,6 +29,18 @@ export function Forum() {
       { id: Date.now(), author: "You · MIT", body: draft.trim(), replies: [] },
     ]);
     setDraft("");
+  };
+  const submitReply = (postId: number) => {
+    if (!replyDraft.trim()) return;
+    setPosts((items) =>
+      items.map((post) =>
+        post.id === postId
+          ? { ...post, replies: [...post.replies, "You · MIT: " + replyDraft.trim()] }
+          : post,
+      ),
+    );
+    setReplyDraft("");
+    setReplyTo(null);
   };
 
   return (
@@ -69,26 +83,49 @@ export function Forum() {
                 ↳ {x}
               </p>
             ))}
-            <button
-              className="button"
-              onClick={() =>
-                setPosts((a) =>
-                  a.map((x) =>
-                    x.id === p.id
-                      ? {
-                          ...x,
-                          replies: [
-                            ...x.replies,
-                            "Thanks — I hope that makes today a little easier.",
-                          ],
-                        }
-                      : x,
-                  ),
-                )
-              }
-            >
-              Add a supportive reply
-            </button>
+            {replyTo === p.id ? (
+              <div className="forum-reply-form">
+                <label className="field-label" htmlFor={"reply-" + p.id}>
+                  Your reply
+                </label>
+                <textarea
+                  id={"reply-" + p.id}
+                  className="text-input"
+                  rows={2}
+                  value={replyDraft}
+                  onChange={(e) => setReplyDraft(e.target.value)}
+                  placeholder="Write a helpful reply…"
+                />
+                <div className="support-actions">
+                  <button
+                    className="button primary"
+                    disabled={!replyDraft.trim()}
+                    onClick={() => submitReply(p.id)}
+                  >
+                    <Send size={14} /> Send reply
+                  </button>
+                  <button
+                    className="button"
+                    onClick={() => {
+                      setReplyTo(null);
+                      setReplyDraft("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                className="button"
+                onClick={() => {
+                  setReplyTo(p.id);
+                  setReplyDraft("");
+                }}
+              >
+                <MessageCircle size={14} /> Reply
+              </button>
+            )}
           </section>
         ))}
       </div>
