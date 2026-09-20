@@ -2298,6 +2298,9 @@ td small {
   left: 20px;
   bottom: 150px;
 }
+.map-stage:has(.search-results) .google-map-error {
+  visibility: hidden;
+}
 .map-stage:has(.location-glass) .map-attribution {
   right: 370px;
 }
