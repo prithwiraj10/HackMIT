@@ -1,17 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fraunces } from "next/font/google";
 import { ArrowRight, Activity } from "lucide-react";
 import "./landing.css";
 
-const STATS = [
-  { value: "32", label: "Campus locations" },
-  { value: "8,515", label: "Students modeled" },
-  { value: "21", label: "Days simulated" },
-];
+const display = Fraunces({
+  subsets: ["latin"],
+  weight: "variable",
+  axes: ["opsz", "SOFT"],
+  variable: "--font-display",
+});
 
 export default function Page() {
   return (
-    <div className="landing">
+    <div className={`landing ${display.variable}`}>
       <nav className="landing-nav" aria-label="Choose an audience">
         <span className="landing-brand">
           <span className="landing-mark">
@@ -40,25 +42,26 @@ export default function Page() {
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            strokeDasharray="12 12"
+            strokeDasharray="10 14"
           />
           <path
             d="M-40 720 C 220 700, 300 520, 560 560 S 980 800, 1240 700 1480 620 1480 620"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            strokeDasharray="12 12"
+            strokeDasharray="10 14"
           />
+          <circle cx="520" cy="300" r="6" fill="currentColor" />
+          <circle cx="1180" cy="220" r="6" fill="currentColor" />
+          <circle cx="560" cy="560" r="6" fill="currentColor" />
+          <circle cx="1240" cy="700" r="6" fill="currentColor" />
         </svg>
 
         <div className="hero-copy">
-          <h1>
-            Outrun the outbreak
-            <span className="caret" />
-          </h1>
+          <h1>Outrun the outbreak</h1>
           <p>
-            We simulate 21 days of flu across MIT so you can see it coming
-            before it reaches you.
+            Twenty-one days of simulated flu across 32 MIT buildings and 8,515
+            students, so you can see it coming before it reaches you.
           </p>
           <div className="hero-actions">
             <a className="solid" href="#students">
@@ -89,20 +92,10 @@ export default function Page() {
             />
           </figure>
         </div>
-
-        <div className="hero-stats">
-          {STATS.map((s) => (
-            <div key={s.label}>
-              <strong>{s.value}</strong>
-              <span>{s.label}</span>
-            </div>
-          ))}
-        </div>
       </header>
 
       <section className="landing-section students" id="students">
         <div className="section-copy">
-          <span className="eyebrow">FOR STUDENTS</span>
           <h2>Know your campus before it knows you.</h2>
           <p>
             See how an outbreak moves through the places you actually spend your
@@ -117,7 +110,6 @@ export default function Page() {
 
       <section className="landing-section admin" id="admin">
         <div className="section-copy">
-          <span className="eyebrow">FOR ADMINISTRATORS</span>
           <h2>Plan the response before the first case.</h2>
           <p>
             Model isolation policies, transmission rates and cross-campus mixing
