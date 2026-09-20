@@ -16,12 +16,12 @@ export default function Page() {
   return (
     <div className={`landing ${display.variable}`}>
       <nav className="landing-nav" aria-label="Choose an audience">
-        <Link className="landing-brand" href="/" aria-label="Freshman Flu home">
+        <Link className="landing-brand" href="/" aria-label="Flu U home">
           <span className="landing-mark">
             <Activity size={19} strokeWidth={2.6} />
           </span>
           <span>
-            Freshman<em>Flu</em>
+            Flu<em>U</em>
           </span>
         </Link>
         <div className="landing-switch">

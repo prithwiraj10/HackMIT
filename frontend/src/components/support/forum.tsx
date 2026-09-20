@@ -21,7 +21,7 @@ export const FORUM_SEED: Post[] = [
   },
 ];
 
-const STORAGE_KEY = "freshman-flu-forum";
+const STORAGE_KEY = "flu-u-forum";
 
 function isPost(x: unknown): x is Post {
   if (typeof x !== "object" || x === null) return false;

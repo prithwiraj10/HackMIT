@@ -6,37 +6,44 @@ import { ArrowRight } from "lucide-react";
 
 /* Each glyph is its own span so CSS can reveal it on a per-character delay
    (`--i`) and trail a caret behind it. Words stay unbreakable so the line
-   wraps at spaces only. The full text is in the DOM from the first byte. */
+   wraps at spaces only; "\n" in the text forces a line break. The full text
+   is in the DOM from the first byte. */
 function TypedHeading({ text }: { text: string }) {
-  const words = text.split(" ");
+  const lines = text.split("\n").map((line) => line.split(" "));
   let index = 0;
   return (
-    <h1 className="typed" aria-label={text}>
-      {words.map((word, w) => (
-        <span className="typed-word" key={w} aria-hidden="true">
-          {Array.from(word).map((char, c) => {
-            const i = index++;
-            return (
-              <span
-                className="typed-char"
-                key={c}
-                style={{ "--i": i } as CSSProperties}
-              >
-                {char}
-              </span>
-            );
-          })}
-          {w < words.length - 1 && (
-            <span
-              className="typed-char"
-              style={{ "--i": index++ } as CSSProperties}
-            >
-              {" "}
+    <h1 className="typed" aria-label={text.replace(/\n/g, " ")}>
+      {lines.map((words, l) => (
+        <span className="typed-line" key={l} aria-hidden="true">
+          {words.map((word, w) => (
+            <span className="typed-word" key={w}>
+              {Array.from(word).map((char, c) => {
+                const i = index++;
+                return (
+                  <span
+                    className="typed-char"
+                    key={c}
+                    style={{ "--i": i } as CSSProperties}
+                  >
+                    {char}
+                  </span>
+                );
+              })}
+              {w < words.length - 1 && (
+                <span
+                  className="typed-char"
+                  style={{ "--i": index++ } as CSSProperties}
+                >
+                  {" "}
+                </span>
+              )}
             </span>
+          ))}
+          {l === lines.length - 1 && (
+            <span className="typed-caret" aria-hidden="true" />
           )}
         </span>
       ))}
-      <span className="typed-caret" aria-hidden="true" />
     </h1>
   );
 }
@@ -83,7 +90,7 @@ function useHeroParallax() {
   return ref;
 }
 
-const HEADLINE = "Outrun the outbreak";
+const HEADLINE = "Outrun the\noutbreak";
 
 export function LandingHero() {
   const ref = useHeroParallax();

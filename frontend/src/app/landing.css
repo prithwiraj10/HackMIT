@@ -157,6 +157,9 @@ html {
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
+.typed-line {
+  display: block;
+}
 .typed-word {
   white-space: nowrap;
 }

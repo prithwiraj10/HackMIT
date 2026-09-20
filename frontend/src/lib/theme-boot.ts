@@ -1,4 +1,4 @@
-export const THEME_STORAGE_KEY = "freshman-flu-theme";
+export const THEME_STORAGE_KEY = "flu-u-theme";
 export const DARK_CLASS = "theme-dark";
 
 /* Inlined in <head> before hydration so the first paint already has the class.

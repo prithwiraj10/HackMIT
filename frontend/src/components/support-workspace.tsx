@@ -80,8 +80,8 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
   },
 };
 
-const STORAGE_KEY = "freshman-flu-checkins";
-const SESSION_KEY = "freshman-flu-student-session";
+const STORAGE_KEY = "flu-u-checkins";
+const SESSION_KEY = "flu-u-student-session";
 const DEMO_ACCOUNTS = ["Student 1", "Student 2"] as const;
 type DemoAccountName = (typeof DEMO_ACCOUNTS)[number];
 
@@ -157,7 +157,7 @@ export function SupportWorkspace() {
             <Activity size={22} />
           </span>
           <span>
-            freshman<span className="brand-light">flu</span>
+            Flu<span className="brand-light">U</span>
             <small>STUDENT SUPPORT WORKSPACE</small>
           </span>
         </Link>

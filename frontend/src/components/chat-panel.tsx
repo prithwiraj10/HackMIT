@@ -114,7 +114,7 @@ export function ChatPanel() {
               </i>
               <span>
                 <strong>Fluency</strong>
-                <small>Freshman Flu simulation guide</small>
+                <small>Flu U simulation guide</small>
               </span>
             </span>
             <button
