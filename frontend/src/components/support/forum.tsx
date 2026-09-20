@@ -53,7 +53,11 @@ export function Forum() {
 
   const save = (next: Post[]) => {
     setPosts(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // storage blocked or full: keep the post in memory for this visit
+    }
   };
 
   const submit = () => {
