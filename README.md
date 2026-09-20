@@ -1,4 +1,4 @@
-# HackMIT — Freshman Flu Simulator
+# HackMIT — Flu U Simulator
 
 Agent-based flu spread simulation over floor plans extracted from images.
 See the open PR for the full app.

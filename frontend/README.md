@@ -1,4 +1,4 @@
-# Freshman Flu campus frontend
+# Flu U campus frontend
 
 A simulator for exploring modeled illness exposure across 32 MIT locations over 21 days. The map uses public geography. The building cohorts are sample student sizes and the outcomes are simulated, not observations or predictions of conditions at MIT.
 

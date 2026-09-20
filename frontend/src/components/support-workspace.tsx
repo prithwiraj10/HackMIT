@@ -78,7 +78,7 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
   },
 };
 
-const STORAGE_KEY = "freshman-flu-checkins";
+const STORAGE_KEY = "flu-u-checkins";
 
 function loadCheckIns(): CheckIn[] {
   try {
@@ -135,7 +135,7 @@ export function SupportWorkspace() {
             <Activity size={22} />
           </span>
           <span>
-            freshman<span className="brand-light">flu</span>
+            Flu<span className="brand-light">U</span>
             <small>STUDENT SUPPORT WORKSPACE</small>
           </span>
         </Link>

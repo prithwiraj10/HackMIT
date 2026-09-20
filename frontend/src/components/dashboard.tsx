@@ -111,7 +111,7 @@ export function Dashboard() {
             <Activity size={22} />
           </span>
           <span>
-            freshman<span className="brand-light">flu</span>
+            Flu<span className="brand-light">U</span>
             <small>CAMPUS SIMULATION LAB</small>
           </span>
         </Link>

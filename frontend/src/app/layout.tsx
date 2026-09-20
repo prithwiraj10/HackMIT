@@ -3,7 +3,7 @@ import { THEME_BOOT_SCRIPT } from "@/lib/theme-boot";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Freshman Flu | MIT Campus Lab",
+  title: "Flu U | MIT Campus Lab",
   description:
     "Explore synthetic campus outbreaks across MIT’s public campus geography.",
 };
