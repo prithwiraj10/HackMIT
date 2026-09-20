@@ -125,11 +125,12 @@ function getHotspots(args: Record<string, unknown>) {
       days++;
     }
     const endB = scenario.snapshots[hi].buildings[i];
-    const startB = scenario.snapshots[lo].buildings[i];
+    const before = lo === 0 ? null : scenario.snapshots[lo - 1].buildings[i];
+    const exposedBefore = before ? before.N - before.S : 0;
     const metrics: Record<string, number> = {
       peak_infectious: peakI,
       infectious_now: endB.I,
-      cumulative_exposure: endB.N - endB.S - (startB.N - startB.S),
+      cumulative_exposure: endB.N - endB.S - exposedBefore,
       exposure_rate: exposureSum / days,
     };
     if (!(metric in metrics))

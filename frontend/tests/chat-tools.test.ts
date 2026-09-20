@@ -25,6 +25,28 @@ test("get_hotspots ranks buildings and respects top_n and windows", () => {
   assert.deepEqual(windowed.window_days, [5, 10]);
 });
 
+test("get_hotspots counts cumulative exposure inclusively from from_day", () => {
+  type Out = { hotspots: { id: string; value: number }[] };
+  const run = (from: number, to: number) =>
+    runTool("get_hotspots", {
+      metric: "cumulative_exposure",
+      from_day: from,
+      to_day: to,
+      top_n: 15,
+    }).result as Out;
+  const exposed = simulate(BASELINE, "b").snapshots.map((s) => {
+    const b = s.buildings.find((x) => x.id === "maseeh")!;
+    return b.N - b.S;
+  });
+  const maseeh = (out: Out) => out.hotspots.find((h) => h.id === "maseeh")!;
+  assert.ok(exposed[0] > 0, "seeded cases are exposed on day 0");
+  assert.ok(Math.abs(maseeh(run(0, DAYS)).value - exposed[DAYS]) < 1e-3);
+  assert.ok(
+    Math.abs(maseeh(run(5, 5)).value - (exposed[5] - exposed[4])) < 1e-3,
+  );
+  assert.ok(maseeh(run(5, 5)).value > 0);
+});
+
 test("get_hotspots rejects unknown metrics without fabricating", () => {
   const res = runTool("get_hotspots", { metric: "vibes" });
   assert.match(
