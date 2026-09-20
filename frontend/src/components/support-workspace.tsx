@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ChevronRight,
   HeartPulse,
+  LockKeyhole,
+  LogOut,
   MapPin,
   MessageCircle,
   Mic,
@@ -80,6 +82,16 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 
 const STORAGE_KEY = "flu-u-checkins";
 const LEGACY_STORAGE_KEY = "freshman-flu-checkins";
+const SESSION_KEY = "flu-u-student-session";
+const DEMO_ACCOUNTS = ["Student 1", "Student 2"] as const;
+type DemoAccountName = (typeof DEMO_ACCOUNTS)[number];
+
+function normalizeDemoAccount(value: string | null): DemoAccountName | null {
+  const match = DEMO_ACCOUNTS.find(
+    (account) => account.toLowerCase() === value?.trim().toLowerCase(),
+  );
+  return match ?? null;
+}
 
 function loadCheckIns(): CheckIn[] {
   try {
@@ -98,11 +110,14 @@ export function SupportWorkspace() {
   const [tab, setTab] = useState<Tab>("home");
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [posts, setPosts] = useState<Post[]>(FORUM_SEED);
+  const [studentName, setStudentName] = useState<string | null>(null);
   const main = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setCheckIns(loadCheckIns());
     setPosts(loadForumPosts());
+    const savedAccount = localStorage.getItem(SESSION_KEY);
+    setStudentName(normalizeDemoAccount(savedAccount));
   }, []);
 
   const navigate = (next: Tab) => {
@@ -126,6 +141,13 @@ export function SupportWorkspace() {
     ),
   ];
   const heading = HEADINGS[tab];
+
+  if (studentName === null) {
+    return <StudentSignIn onSignIn={(account) => {
+      localStorage.setItem(SESSION_KEY, account);
+      setStudentName(account);
+    }} />;
+  }
 
   return (
     <div className="app-shell support">
@@ -156,6 +178,13 @@ export function SupportWorkspace() {
             <Activity size={16} />
             <span>Campus simulation</span>
           </Link>
+          <button className="button quiet" onClick={() => {
+            localStorage.removeItem(SESSION_KEY);
+            setStudentName(null);
+          }} aria-label="Sign out of student workspace">
+            <LogOut size={16} />
+            <span>Sign out</span>
+          </button>
           <ThemeToggle />
           <a
             className="github-link"
@@ -222,7 +251,7 @@ export function SupportWorkspace() {
         {tab === "home" && (
           <Overview onNavigate={navigate} hasCheckIn={checkIns.length > 0} />
         )}
-        {tab === "food" && <FoodSupport todaySymptoms={todaySymptoms} />}
+        {tab === "food" && <FoodSupport todaySymptoms={todaySymptoms} studentName={studentName} />}
         {tab === "academics" && <AcademicTriage />}
         {tab === "voice" && <LostVoice />}
         {tab === "tracking" && (
@@ -231,6 +260,89 @@ export function SupportWorkspace() {
         {tab === "forum" && <Forum posts={posts} onChange={savePosts} />}
       </main>
     </div>
+  );
+}
+
+function StudentSignIn({
+  onSignIn,
+}: {
+  onSignIn: (account: DemoAccountName) => void;
+}) {
+  const [username, setUsername] = useState("Student 1");
+  const [password, setPassword] = useState("demo");
+  const [error, setError] = useState("");
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const account = normalizeDemoAccount(username);
+    if (!account || password !== "demo") {
+      setError("Use Student 1 or Student 2 with the demo password.");
+      return;
+    }
+    onSignIn(account);
+  };
+
+  return (
+    <main className="support sign-in-shell">
+      <section className="sign-in-card">
+        <div className="sign-in-brand">
+          <span className="brand-mark">
+            <Activity size={23} />
+          </span>
+          <span>
+            Flu<span className="brand-light">U</span>
+            <small>STUDENT SUPPORT WORKSPACE</small>
+          </span>
+        </div>
+        <span className="eyebrow">WELCOME BACK</span>
+        <h1>Support for the days you can’t push through.</h1>
+        <p className="sign-in-intro">
+          Sign in to keep food-run requests and mock credits separate while
+          you explore the student workspace.
+        </p>
+
+        <form onSubmit={submit}>
+          <label className="field-label" htmlFor="demo-username">
+            Username
+          </label>
+          <input
+            id="demo-username"
+            className="text-input"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              setError("");
+            }}
+            autoComplete="username"
+          />
+          <label className="field-label" htmlFor="demo-password">
+            Password
+          </label>
+          <div className="password-input-wrap">
+            <LockKeyhole size={16} aria-hidden="true" />
+            <input
+              id="demo-password"
+              className="text-input"
+              type="password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setError("");
+              }}
+              autoComplete="current-password"
+            />
+          </div>
+          {error && <p className="sign-in-error" role="alert">{error}</p>}
+          <button className="button primary sign-in-button" type="submit">
+            Enter workspace <ArrowRight size={16} />
+          </button>
+        </form>
+        <p className="support-hint">
+          Demo logins: <strong>Student 1 / demo</strong> or{" "}
+          <strong>Student 2 / demo</strong>. No real account or payment data.
+        </p>
+      </section>
+    </main>
   );
 }
 

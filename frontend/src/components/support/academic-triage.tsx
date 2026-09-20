@@ -33,6 +33,10 @@ type Plan = {
     subject: string;
     body: string;
   }[];
+  studentSupportEmail?: {
+    subject: string;
+    body: string;
+  };
 };
 
 export function AcademicTriage() {
@@ -356,6 +360,18 @@ export function AcademicTriage() {
               <pre>{x.body}</pre>
             </article>
           ))}
+          {plan.studentSupportEmail && (
+            <>
+              <h3 className="support-subhead">Reach out to S³</h3>
+              <article className="support-result support-email">
+                <b>To: S³ Student Support Services</b>
+                <p>
+                  <b>Subject:</b> {plan.studentSupportEmail.subject}
+                </p>
+                <pre>{plan.studentSupportEmail.body}</pre>
+              </article>
+            </>
+          )}
         </section>
       )}
     </>
