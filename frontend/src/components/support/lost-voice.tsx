@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Mic, Volume2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Mic, Phone, Send, Volume2 } from "lucide-react";
 import { DEEPGRAM_VOICES, recognizeSpeech } from "@/lib/support-data";
 
 export function LostVoice() {
@@ -9,7 +9,113 @@ export function LostVoice() {
     <div className="support-columns">
       <WhisperToLoud />
       <CallProxy />
+      <LiveCallAgent />
     </div>
+  );
+}
+
+type CallStatus = {
+  status: string;
+  question?: string | null;
+  transcript?: { role: string; content: string }[];
+};
+
+function LiveCallAgent() {
+  const [phone, setPhone] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [purpose, setPurpose] = useState("Ask for the soonest available appointment");
+  const [details, setDetails] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [callSid, setCallSid] = useState("");
+  const [call, setCall] = useState<CallStatus | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [status, setStatus] = useState("Set up your call, then connect when ready.");
+
+  useEffect(() => {
+    if (!callSid) return;
+    const poll = async () => {
+      const res = await fetch("/api/live-call/" + encodeURIComponent(callSid), { cache: "no-store" });
+      const data = (await res.json()) as CallStatus & { error?: string };
+      if (res.ok) {
+        setCall(data);
+        setStatus(data.status === "needs your input" ? "The agent needs your answer." : "Call " + data.status + ".");
+      }
+    };
+    void poll();
+    const interval = window.setInterval(() => void poll(), 2500);
+    return () => window.clearInterval(interval);
+  }, [callSid]);
+
+  const startCall = async () => {
+    if (!consent) {
+      setStatus("Confirm that the recipient has consented to this AI-assisted call.");
+      return;
+    }
+    setStatus("Asking Twilio to place the call…");
+    const res = await fetch("/api/live-call/start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        to: phone,
+        context: { student_name: studentName, purpose, details },
+      }),
+    });
+    const data: { call_sid?: string; error?: string } = await res.json();
+    if (!res.ok || !data.call_sid) {
+      setStatus(data.error || "Could not start the call.");
+      return;
+    }
+    setCallSid(data.call_sid);
+    setStatus("Calling… keep this page open to see the live status.");
+  };
+
+  const sendAnswer = async () => {
+    if (!callSid || !answer.trim()) return;
+    const res = await fetch("/api/live-call/" + encodeURIComponent(callSid) + "/answer", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ answer }),
+    });
+    const data: { error?: string } = await res.json();
+    if (!res.ok) {
+      setStatus(data.error || "Could not send your answer.");
+      return;
+    }
+    setAnswer("");
+    setStatus("Your answer was sent to the agent.");
+  };
+
+  return (
+    <section className="panel live-call-panel">
+      <div className="panel-heading">
+        <div>
+          <h2>3. Live call agent</h2>
+          <p>Deepgram speaks and listens on an outbound phone call while you stay in control here.</p>
+        </div>
+      </div>
+      <label className="field-label" htmlFor="live-number">Recipient phone number</label>
+      <input id="live-number" className="text-input" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+16175551212" inputMode="tel" />
+      <label className="field-label" htmlFor="live-name">Your name (optional)</label>
+      <input id="live-name" className="text-input" value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Kira" />
+      <label className="field-label" htmlFor="live-purpose">What should the call accomplish?</label>
+      <input id="live-purpose" className="text-input" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+      <label className="field-label" htmlFor="live-details">Context the agent may use</label>
+      <textarea id="live-details" className="text-input" rows={4} value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Example: I have had a fever and sore throat for two days. Ask about the earliest appointment. If they need insurance or a date I did not provide, ask me in this page." />
+      <label className="live-call-consent"><input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> I have permission to place this AI-assisted call and will use a verified recipient on my Twilio trial.</label>
+      <div className="support-actions">
+        <button className="button primary" onClick={startCall} disabled={!phone || !purpose || !details || !!callSid}><Phone size={15} /> Start live call</button>
+      </div>
+      <p className="status-message">{status}</p>
+      {call?.question && (
+        <div className="live-call-question">
+          <strong>Agent asks:</strong> {call.question}
+          <textarea className="text-input" rows={2} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Type the information or decision for the agent." />
+          <button className="button" onClick={sendAnswer} disabled={!answer.trim()}><Send size={15} /> Send to agent</button>
+        </div>
+      )}
+      {!!call?.transcript?.length && <div className="live-call-transcript">{call.transcript.slice(-4).map((turn, index) => <p key={index}><strong>{turn.role}:</strong> {turn.content}</p>)}</div>}
+      <p className="support-hint">For consented calls only. This is communication support, not medical advice; contact campus health or emergency services when appropriate.</p>
+    </section>
   );
 }
 
