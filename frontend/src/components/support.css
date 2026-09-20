@@ -391,8 +391,7 @@
   padding: 28px;
   background:
     radial-gradient(circle at 84% 10%, #e2edda 0, transparent 31%),
-    radial-gradient(circle at 9% 88%, #edf1e5 0, transparent 29%),
-    #f7f8f3;
+    radial-gradient(circle at 9% 88%, #edf1e5 0, transparent 29%), #f7f8f3;
 }
 .sign-in-card {
   width: min(100%, 560px);
@@ -402,12 +401,19 @@
   padding: 38px;
   box-shadow: 0 22px 60px rgba(47, 60, 43, 0.1);
 }
+.sign-in-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 35px;
+}
 .sign-in-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 35px;
   color: var(--ink);
+  text-decoration: none;
   font-family: var(--font-display);
   font-size: 22px;
   line-height: 1;
@@ -521,8 +527,7 @@
 }
 .theme-dark .sign-in-shell {
   background:
-    radial-gradient(circle at 84% 10%, #273025 0, transparent 31%),
-    #101511;
+    radial-gradient(circle at 84% 10%, #273025 0, transparent 31%), #101511;
 }
 .theme-dark .sign-in-card {
   background: #161d17;
@@ -558,7 +563,7 @@
   .sign-in-card {
     padding: 26px 21px;
   }
-  .sign-in-brand {
+  .sign-in-top {
     margin-bottom: 27px;
   }
 }

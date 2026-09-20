@@ -93,6 +93,23 @@ function normalizeDemoAccount(value: string | null): DemoAccountName | null {
   return match ?? null;
 }
 
+function readSession(): DemoAccountName | null {
+  try {
+    return normalizeDemoAccount(localStorage.getItem(SESSION_KEY));
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(account: DemoAccountName | null) {
+  try {
+    if (account) localStorage.setItem(SESSION_KEY, account);
+    else localStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* storage blocked: the session still lives for this page */
+  }
+}
+
 function loadCheckIns(): CheckIn[] {
   try {
     const parsed: unknown = JSON.parse(
@@ -110,14 +127,15 @@ export function SupportWorkspace() {
   const [tab, setTab] = useState<Tab>("home");
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
   const [posts, setPosts] = useState<Post[]>(FORUM_SEED);
-  const [studentName, setStudentName] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState<
+    DemoAccountName | null | undefined
+  >(undefined);
   const main = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setCheckIns(loadCheckIns());
     setPosts(loadForumPosts());
-    const savedAccount = localStorage.getItem(SESSION_KEY);
-    setStudentName(normalizeDemoAccount(savedAccount));
+    setStudentName(readSession());
   }, []);
 
   const navigate = (next: Tab) => {
@@ -142,11 +160,16 @@ export function SupportWorkspace() {
   ];
   const heading = HEADINGS[tab];
 
+  if (studentName === undefined) return null;
   if (studentName === null) {
-    return <StudentSignIn onSignIn={(account) => {
-      localStorage.setItem(SESSION_KEY, account);
-      setStudentName(account);
-    }} />;
+    return (
+      <StudentSignIn
+        onSignIn={(account) => {
+          writeSession(account);
+          setStudentName(account);
+        }}
+      />
+    );
   }
 
   return (
@@ -178,12 +201,17 @@ export function SupportWorkspace() {
             <Activity size={16} />
             <span>Campus simulation</span>
           </Link>
-          <button className="button quiet" onClick={() => {
-            localStorage.removeItem(SESSION_KEY);
-            setStudentName(null);
-          }} aria-label="Sign out of student workspace">
+          <button
+            className="button quiet"
+            onClick={() => {
+              writeSession(null);
+              setStudentName(null);
+            }}
+            aria-label={`Sign out of ${studentName}`}
+            title={`Signed in as ${studentName}`}
+          >
             <LogOut size={16} />
-            <span>Sign out</span>
+            <span>{studentName} · Sign out</span>
           </button>
           <ThemeToggle />
           <a
@@ -251,7 +279,12 @@ export function SupportWorkspace() {
         {tab === "home" && (
           <Overview onNavigate={navigate} hasCheckIn={checkIns.length > 0} />
         )}
-        {tab === "food" && <FoodSupport todaySymptoms={todaySymptoms} studentName={studentName} />}
+        {tab === "food" && (
+          <FoodSupport
+            todaySymptoms={todaySymptoms}
+            studentName={studentName}
+          />
+        )}
         {tab === "academics" && <AcademicTriage />}
         {tab === "voice" && <LostVoice />}
         {tab === "tracking" && (
@@ -285,20 +318,23 @@ function StudentSignIn({
   return (
     <main className="support sign-in-shell">
       <section className="sign-in-card">
-        <div className="sign-in-brand">
-          <span className="brand-mark">
-            <Activity size={23} />
-          </span>
-          <span>
-            Flu<span className="brand-light">U</span>
-            <small>STUDENT SUPPORT WORKSPACE</small>
-          </span>
+        <div className="sign-in-top">
+          <Link className="sign-in-brand" href="/">
+            <span className="brand-mark">
+              <Activity size={23} />
+            </span>
+            <span>
+              Flu<span className="brand-light">U</span>
+              <small>STUDENT SUPPORT WORKSPACE</small>
+            </span>
+          </Link>
+          <ThemeToggle />
         </div>
         <span className="eyebrow">WELCOME BACK</span>
         <h1>Support for the days you can’t push through.</h1>
         <p className="sign-in-intro">
-          Sign in to keep food-run requests and mock credits separate while
-          you explore the student workspace.
+          Sign in to keep food-run requests and mock credits separate while you
+          explore the student workspace.
         </p>
 
         <form onSubmit={submit}>
@@ -332,7 +368,11 @@ function StudentSignIn({
               autoComplete="current-password"
             />
           </div>
-          {error && <p className="sign-in-error" role="alert">{error}</p>}
+          {error && (
+            <p className="sign-in-error" role="alert">
+              {error}
+            </p>
+          )}
           <button className="button primary sign-in-button" type="submit">
             Enter workspace <ArrowRight size={16} />
           </button>

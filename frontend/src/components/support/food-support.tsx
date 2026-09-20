@@ -10,16 +10,80 @@ import {
   type FoodArea,
 } from "@/lib/support-data";
 
-type Request = { id: number; title: string; spot: string; amount: number; requester: string; claimedBy?: string };
-const BOARD_KEY = "freshman-flu-food-board";
-const CREDITS_KEY = "freshman-flu-student-credits";
+type Request = {
+  id: number;
+  title: string;
+  spot: string;
+  amount: number;
+  requester: string;
+  claimedBy?: string;
+};
+type Balances = Record<string, number>;
+const BOARD_KEY = "flu-u-food-board";
+const CREDITS_KEY = "flu-u-student-credits";
+const STARTING_CREDITS = 100;
 
-export function FoodSupport({ todaySymptoms, studentName }: { todaySymptoms: string[]; studentName: string }) {
+function isRequest(x: unknown): x is Request {
+  if (typeof x !== "object" || x === null) return false;
+  const r = x as Record<string, unknown>;
+  return (
+    typeof r.id === "number" &&
+    typeof r.title === "string" &&
+    typeof r.spot === "string" &&
+    typeof r.amount === "number" &&
+    typeof r.requester === "string" &&
+    (r.claimedBy === undefined || typeof r.claimedBy === "string")
+  );
+}
+
+function loadBoard(): Request[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(BOARD_KEY) ?? "null",
+    );
+    return Array.isArray(parsed) ? parsed.filter(isRequest) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadBalances(): Balances {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(CREDITS_KEY) ?? "null",
+    );
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed))
+      return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, number] => typeof entry[1] === "number",
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function store(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* storage blocked or full: the board still works for this page */
+  }
+}
+
+export function FoodSupport({
+  todaySymptoms,
+  studentName,
+}: {
+  todaySymptoms: string[];
+  studentName: string;
+}) {
   const [symptom, setSymptom] = useState<string>("Sore throat");
   const [area, setArea] = useState<FoodArea>("MIT campus");
   const [guidance, setGuidance] = useState("");
   const [requests, setRequests] = useState<Request[]>([]);
-  const [credits, setCredits] = useState(100);
+  const [credits, setCredits] = useState(STARTING_CREDITS);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("Soup + tea pickup");
   const [spot, setSpot] = useState(FOOD_SPOTS["MIT campus"][0]);
@@ -27,14 +91,29 @@ export function FoodSupport({ todaySymptoms, studentName }: { todaySymptoms: str
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    const board = JSON.parse(localStorage.getItem(BOARD_KEY) ?? "[]");
-    const balances = JSON.parse(localStorage.getItem(CREDITS_KEY) ?? "{}");
-    if (!(studentName in balances)) balances[studentName] = 100;
-    setRequests(Array.isArray(board) ? board : []);
-    setCredits(balances[studentName]);
-    localStorage.setItem(CREDITS_KEY, JSON.stringify(balances));
+    setRequests(loadBoard());
+    setCredits(loadBalances()[studentName] ?? STARTING_CREDITS);
   }, [studentName]);
-  const saveBoard = (next: Request[]) => { setRequests(next); localStorage.setItem(BOARD_KEY, JSON.stringify(next)); };
+
+  const saveBoard = (next: Request[]) => {
+    setRequests(next);
+    store(BOARD_KEY, next);
+  };
+
+  const claim = (r: Request) => {
+    const balances = loadBalances();
+    balances[r.requester] =
+      (balances[r.requester] ?? STARTING_CREDITS) - r.amount;
+    balances[studentName] =
+      (balances[studentName] ?? STARTING_CREDITS) + r.amount;
+    store(CREDITS_KEY, balances);
+    setCredits(balances[studentName]);
+    saveBoard(
+      requests.map((x) =>
+        x.id === r.id ? { ...x, claimedBy: studentName } : x,
+      ),
+    );
+  };
 
   const recommend = () =>
     setGuidance(foodGuidance(symptom === "today" ? todaySymptoms : [symptom]));
@@ -143,7 +222,13 @@ export function FoodSupport({ todaySymptoms, studentName }: { todaySymptoms: str
               }
               saveBoard([
                 ...requests,
-                { id: Date.now(), title, spot, amount: credits, requester: studentName },
+                {
+                  id: Date.now(),
+                  title,
+                  spot,
+                  amount: credits,
+                  requester: studentName,
+                },
               ]);
               setFormError("");
               setShowForm(false);
@@ -187,17 +272,29 @@ export function FoodSupport({ todaySymptoms, studentName }: { todaySymptoms: str
                 <div>
                   <strong>{r.title}</strong>
                   <small>
-                    {r.spot} · {r.amount} mock credits · requested by {r.requester}{r.claimedBy ? " · claimed by " + r.claimedBy : ""}
+                    {r.spot} · {r.amount} mock credits ·{" "}
+                    {r.requester === studentName
+                      ? "your request"
+                      : `requested by ${r.requester}`}
+                    {r.claimedBy
+                      ? ` · claimed by ${r.claimedBy}`
+                      : " · awaiting volunteer"}
                   </small>
                 </div>
-                {r.requester === studentName ? <button className="button" onClick={() => saveBoard(requests.filter((x) => x.id !== r.id))}><Trash2 size={14} /> Remove</button> : !r.claimedBy ? <button className="button primary" onClick={() => {
-                  const balances = JSON.parse(localStorage.getItem(CREDITS_KEY) ?? "{}");
-                  balances[r.requester] = (balances[r.requester] ?? 100) - r.amount;
-                  balances[studentName] = (balances[studentName] ?? 100) + r.amount;
-                  localStorage.setItem(CREDITS_KEY, JSON.stringify(balances));
-                  setCredits(balances[studentName]);
-                  saveBoard(requests.map((x) => x.id === r.id ? { ...x, claimedBy: studentName } : x));
-                }}>Claim · +{r.amount}</button> : null}
+                {r.requester === studentName ? (
+                  <button
+                    className="button"
+                    onClick={() =>
+                      saveBoard(requests.filter((x) => x.id !== r.id))
+                    }
+                  >
+                    <Trash2 size={14} /> Remove
+                  </button>
+                ) : r.claimedBy ? null : (
+                  <button className="button primary" onClick={() => claim(r)}>
+                    Claim · +{r.amount}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
