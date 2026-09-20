@@ -1,0 +1,20 @@
+.student-shell .chips button.selected{background:var(--olive);border-color:var(--olive);color:white}
+.student-shell .hint{color:#67706a;font-size:.88rem;margin:.6rem 0}
+.student-shell .result{background:#f1f5ee;border:1px solid #dbe5d5;border-radius:10px;margin-top:1rem;padding:1rem}
+.student-shell .result ol{line-height:1.7;padding-left:1.3rem}
+.student-shell .result pre{font-family:inherit;line-height:1.55;margin:0;white-space:pre-wrap}
+.student-shell .request-form{align-items:center;display:grid;gap:.5rem;grid-template-columns:1fr 1fr auto;margin-top:1rem}
+.student-shell .request-form input{border:1px solid #d6ddd0;border-radius:7px;padding:.65rem}
+.student-shell .file-button{align-items:center;border:1px solid #cbd4c4;border-radius:7px;color:#344038;cursor:pointer;display:inline-flex;font-size:.88rem;font-weight:700;padding:.55rem .7rem;width:max-content}
+.student-shell .file-button input{display:none}
+.student-shell .checkin{display:grid;gap:2rem;grid-template-columns:minmax(240px,.8fr) minmax(350px,1.2fr)}
+.student-shell .checkin label{display:grid;font-size:.9rem;font-weight:700;gap:.45rem;margin:.75rem 0}
+.student-shell .checkin input[type="range"]{accent-color:var(--olive);width:100%}
+.student-shell .calendar-head{align-items:center;display:flex;justify-content:space-between;margin-bottom:.75rem}
+.student-shell .calendar{display:grid;gap:.4rem;grid-template-columns:repeat(7,minmax(0,1fr))}
+.student-shell .calendar button{background:#fff;border:1px solid #e0e5dd;border-radius:8px;cursor:pointer;min-height:56px;padding:.35rem;text-align:left}
+.student-shell .calendar button.logged{background:#e8f0e2;border-color:#91aa82}
+.student-shell .calendar button.active{box-shadow:0 0 0 2px var(--olive)}
+.student-shell .calendar small{color:#51604f;display:block;font-size:.68rem;margin-top:.25rem}
+.student-shell .calendar-day{color:#879087;font-size:.68rem;text-align:center}
+@media(max-width:760px){.student-shell .checkin{grid-template-columns:1fr}.student-shell .request-form{grid-template-columns:1fr}.student-shell .calendar button{min-height:48px}}
