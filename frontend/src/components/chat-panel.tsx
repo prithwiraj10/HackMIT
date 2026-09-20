@@ -25,6 +25,18 @@ function preview(result: unknown) {
   return value.length > 400 ? `${value.slice(0, 400)}…` : value;
 }
 
+function renderInline(text: string) {
+  return text
+    .split(/(\*\*[^*]+\*\*)/g)
+    .map((part, i) =>
+      part.startsWith("**") && part.endsWith("**") ? (
+        <strong key={i}>{part.slice(2, -2)}</strong>
+      ) : (
+        part
+      ),
+    );
+}
+
 export function ChatPanel() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -136,7 +148,7 @@ export function ChatPanel() {
                 </p>
               ) : (
                 <div key={index} className="chat-message assistant">
-                  <p>{message.content}</p>
+                  <p>{renderInline(message.content)}</p>
                   {!!message.calls?.length && (
                     <details className="chat-tools">
                       <summary>
