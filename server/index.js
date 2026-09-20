@@ -48,7 +48,8 @@ app.post('/api/syllabus', express.raw({type:'application/pdf',limit:'15mb'}), as
 app.post('/api/syllabus/text', async(req,res)=>{ const {userId,course,text}=req.body; db.prepare('INSERT INTO syllabi (user_id,course,text) VALUES (?,?,?)').run(userId,course,text);res.json({analysis:await analyzeWithOpenAI(text)}) })
 const env = key => (process.env[key] || '').trim()
 const E164=/^\+[1-9]\d{7,14}$/
-const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
+const LOCAL_HOST=/^(localhost|\[::1\]|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.)|\.local$/i
+const publicBase=value=>{ try { const url=new URL(value); return url.protocol==='https:'&&url.hostname&&!LOCAL_HOST.test(url.hostname)&&!url.username&&!url.password&&url.pathname==='/'&&!url.search&&!url.hash ? url.origin : '' } catch { return '' } }
 app.get('/api/config', (_,res)=>{const deepgram=Boolean(env('DEEPGRAM_API_KEY')),twilioAccount=Boolean(env('TWILIO_ACCOUNT_SID')&&env('TWILIO_AUTH_TOKEN')),twilioFromNumber=E164.test(env('TWILIO_PHONE_NUMBER')),twilioPublicUrl=Boolean(publicBase(env('TWILIO_PUBLIC_URL')));res.json({deepgram,openai:Boolean(env('OPENAI_API_KEY')),twilioAccount,twilioFromNumber,twilioPublicUrl,twilioVoiceAgent:deepgram&&twilioAccount&&twilioFromNumber&&twilioPublicUrl})})
 app.post('/api/call', async(req,res)=>{
   const {to,text}=req.body
@@ -60,7 +61,7 @@ app.post('/api/call', async(req,res)=>{
   if(!accountSid||!authToken) return res.status(503).json({error:'Add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to .env, then restart the server.'})
   if(!E164.test(from)) return res.status(503).json({error:'Add TWILIO_PHONE_NUMBER to .env in E.164 format, e.g. +16175551212, then restart the server.'})
   if(!rawPublicUrl) return res.status(503).json({error:'Add TWILIO_PUBLIC_URL (your public HTTPS ngrok URL) to .env, then restart the server.'})
-  if(!publicUrl) return res.status(503).json({error:'TWILIO_PUBLIC_URL must be a public HTTPS base URL with no path, e.g. https://your-name.ngrok-free.app'})
+  if(!publicUrl) return res.status(503).json({error:'TWILIO_PUBLIC_URL must be an internet-reachable HTTPS base URL with no path, e.g. https://your-name.ngrok-free.app. localhost and private network addresses will not work because Twilio fetches this URL.'})
   if(!E164.test(to||'')) return res.status(400).json({error:'Use a full phone number in E.164 format, e.g. +16175551212.'})
   const safeText=String(text||'').slice(0,1600)
   if(!safeText.trim()) return res.status(400).json({error:'Add the message you want the call to speak.'})
