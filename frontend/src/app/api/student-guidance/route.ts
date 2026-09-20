@@ -2,7 +2,7 @@ const fallback =
   "Rest, fluids, and low-effort meals can be reasonable supportive steps. If symptoms are severe, worsening, or making it hard to breathe, stay awake, or keep fluids down, contact campus health or urgent care. This is general support, not a diagnosis or medication instruction.";
 
 export async function POST(request: Request) {
-  let body: { symptoms?: unknown; note?: unknown };
+  let body: { symptoms?: unknown; note?: unknown; severity?: unknown; energy?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -12,6 +12,8 @@ export async function POST(request: Request) {
     ? body.symptoms.filter((x): x is string => typeof x === "string").join(", ")
     : "";
   const note = typeof body.note === "string" ? body.note.slice(0, 1000) : "";
+  const severity = typeof body.severity === "number" ? body.severity : "unknown";
+  const energy = typeof body.energy === "number" ? body.energy : "unknown";
   if (!process.env.OPENAI_API_KEY)
     return Response.json({ guidance: fallback, source: "fallback" });
 
@@ -31,7 +33,7 @@ export async function POST(request: Request) {
             content:
               "Give brief, general, non-diagnostic sick-day support for a college student. Do not name a diagnosis, recommend specific medication or dosing, or replace care. Mention reasonable self-care categories, when to contact campus health, and emergency red flags. Use 3 short bullets.",
           },
-          { role: "user", content: "Symptoms: " + (symptoms || "none") + "\nNote: " + (note || "none") },
+          { role: "user", content: "Symptoms: " + (symptoms || "none") + "\nSeverity (1-5): " + severity + "\nEnergy (1-5): " + energy + "\nStudent summary: " + (note || "none") },
         ],
       }),
       signal: AbortSignal.timeout(20_000),
