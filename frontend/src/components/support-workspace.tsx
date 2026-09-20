@@ -11,7 +11,6 @@ import {
   ChevronDown,
   ChevronRight,
   HeartPulse,
-  HandHeart,
   LockKeyhole,
   LogOut,
   MapPin,
@@ -20,7 +19,6 @@ import {
   ShoppingBag,
   Trash2,
   Utensils,
-  UserRound,
   Volume2,
 } from "lucide-react";
 import { SYMPTOMS, type CheckIn } from "@/lib/support-data";
@@ -84,23 +82,14 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 
 const STORAGE_KEY = "freshman-flu-checkins";
 const SESSION_KEY = "freshman-flu-student-session";
-const DEMO_ACCOUNTS = [
-  {
-    name: "Student",
-    role: "Request food runs and manage your sick-day support plan.",
-    Icon: UserRound,
-  },
-  {
-    name: "Volunteer",
-    role: "Browse the food-run board and claim a neighbor's request.",
-    Icon: HandHeart,
-  },
-] as const;
+const DEMO_ACCOUNTS = ["Student 1", "Student 2"] as const;
+type DemoAccountName = (typeof DEMO_ACCOUNTS)[number];
 
-type DemoAccountName = (typeof DEMO_ACCOUNTS)[number]["name"];
-
-function isDemoAccount(value: string | null): value is DemoAccountName {
-  return DEMO_ACCOUNTS.some((account) => account.name === value);
+function normalizeDemoAccount(value: string | null): DemoAccountName | null {
+  const match = DEMO_ACCOUNTS.find(
+    (account) => account.toLowerCase() === value?.trim().toLowerCase(),
+  );
+  return match ?? null;
 }
 
 function loadCheckIns(): CheckIn[] {
@@ -125,7 +114,7 @@ export function SupportWorkspace() {
     setCheckIns(loadCheckIns());
     setPosts(loadForumPosts());
     const savedAccount = localStorage.getItem(SESSION_KEY);
-    setStudentName(isDemoAccount(savedAccount) ? savedAccount : null);
+    setStudentName(normalizeDemoAccount(savedAccount));
   }, []);
 
   const navigate = (next: Tab) => {
@@ -276,14 +265,15 @@ function StudentSignIn({
 }: {
   onSignIn: (account: DemoAccountName) => void;
 }) {
-  const [account, setAccount] = useState<DemoAccountName>("Student");
+  const [username, setUsername] = useState("Student 1");
   const [password, setPassword] = useState("demo");
   const [error, setError] = useState("");
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (password !== "demo") {
-      setError("Use the demo password shown below.");
+    const account = normalizeDemoAccount(username);
+    if (!account || password !== "demo") {
+      setError("Use Student 1 or Student 2 with the demo password.");
       return;
     }
     onSignIn(account);
@@ -304,38 +294,24 @@ function StudentSignIn({
         <span className="eyebrow">WELCOME BACK</span>
         <h1>Support for the days you can’t push through.</h1>
         <p className="sign-in-intro">
-          Choose a demo account to keep food-run requests and mock credits
-          separate while you explore the student workspace.
+          Sign in to keep food-run requests and mock credits separate while
+          you explore the student workspace.
         </p>
 
         <form onSubmit={submit}>
-          <fieldset className="account-picker">
-            <legend>Choose an account</legend>
-            <div className="account-options">
-              {DEMO_ACCOUNTS.map(({ name, role, Icon }) => (
-                <button
-                  key={name}
-                  type="button"
-                  className={
-                    account === name
-                      ? "account-option selected"
-                      : "account-option"
-                  }
-                  aria-pressed={account === name}
-                  onClick={() => {
-                    setAccount(name);
-                    setError("");
-                  }}
-                >
-                  <span className="account-icon"><Icon size={19} /></span>
-                  <span>
-                    <strong>{name}</strong>
-                    <small>{role}</small>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </fieldset>
+          <label className="field-label" htmlFor="demo-username">
+            Username
+          </label>
+          <input
+            id="demo-username"
+            className="text-input"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              setError("");
+            }}
+            autoComplete="username"
+          />
           <label className="field-label" htmlFor="demo-password">
             Password
           </label>
@@ -355,12 +331,12 @@ function StudentSignIn({
           </div>
           {error && <p className="sign-in-error" role="alert">{error}</p>}
           <button className="button primary sign-in-button" type="submit">
-            Enter {account} workspace <ArrowRight size={16} />
+            Enter workspace <ArrowRight size={16} />
           </button>
         </form>
         <p className="support-hint">
-          Demo accounts: <strong>Student / demo</strong> or{" "}
-          <strong>Volunteer / demo</strong>. No real account or payment data.
+          Demo logins: <strong>Student 1 / demo</strong> or{" "}
+          <strong>Student 2 / demo</strong>. No real account or payment data.
         </p>
       </section>
     </main>
