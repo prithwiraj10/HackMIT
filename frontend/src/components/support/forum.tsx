@@ -3,9 +3,14 @@
 import { useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
 
-type Post = { id: number; author: string; body: string; replies: string[] };
+export type Post = {
+  id: number;
+  author: string;
+  body: string;
+  replies: string[];
+};
 
-const SEED: Post[] = [
+export const FORUM_SEED: Post[] = [
   {
     id: 1,
     author: "Maya · East Campus",
@@ -16,26 +21,67 @@ const SEED: Post[] = [
   },
 ];
 
-export function Forum() {
-  const [posts, setPosts] = useState<Post[]>(SEED);
+const STORAGE_KEY = "freshman-flu-forum";
+
+function isPost(x: unknown): x is Post {
+  if (typeof x !== "object" || x === null) return false;
+  const p = x as Record<string, unknown>;
+  return (
+    typeof p.id === "number" &&
+    typeof p.author === "string" &&
+    typeof p.body === "string" &&
+    Array.isArray(p.replies) &&
+    p.replies.every((r) => typeof r === "string")
+  );
+}
+
+export function loadForumPosts(): Post[] {
+  try {
+    const parsed: unknown = JSON.parse(
+      localStorage.getItem(STORAGE_KEY) ?? "null",
+    );
+    return Array.isArray(parsed) && parsed.every(isPost) ? parsed : FORUM_SEED;
+  } catch {
+    return FORUM_SEED;
+  }
+}
+
+export function storeForumPosts(posts: Post[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  } catch {
+    // storage blocked or full: posts live in workspace state for this visit
+  }
+}
+
+export function Forum({
+  posts,
+  onChange,
+}: {
+  posts: Post[];
+  onChange: (posts: Post[]) => void;
+}) {
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyDraft, setReplyDraft] = useState("");
 
   const submit = () => {
     if (!draft.trim()) return;
-    setPosts((a) => [
-      ...a,
+    onChange([
+      ...posts,
       { id: Date.now(), author: "You · MIT", body: draft.trim(), replies: [] },
     ]);
     setDraft("");
   };
   const submitReply = (postId: number) => {
     if (!replyDraft.trim()) return;
-    setPosts((items) =>
-      items.map((post) =>
+    onChange(
+      posts.map((post) =>
         post.id === postId
-          ? { ...post, replies: [...post.replies, "You · MIT: " + replyDraft.trim()] }
+          ? {
+              ...post,
+              replies: [...post.replies, "You · MIT: " + replyDraft.trim()],
+            }
           : post,
       ),
     );
@@ -49,7 +95,7 @@ export function Forum() {
         <div className="panel-heading">
           <div>
             <h2>Ask the community</h2>
-            <p>Posts stay in this browser only during the demo.</p>
+            <p>Posts are saved in this browser only during the demo.</p>
           </div>
         </div>
         <label className="field-label" htmlFor="forum-post">

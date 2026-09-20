@@ -49,8 +49,8 @@ export function AcademicTriage() {
   const [busy, setBusy] = useState(false);
   const [plan, setPlan] = useState<Plan | null>(null);
 
-  const update = (i: number, patch: Partial<Course>) =>
-    setCourses((a) => a.map((c, j) => (j === i ? { ...c, ...patch } : c)));
+  const update = (id: number, patch: Partial<Course>) =>
+    setCourses((a) => a.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 
   const importCanvas = async () => {
     setBusy(true);
@@ -74,7 +74,7 @@ export function AcademicTriage() {
     }
   };
 
-  const parsePdf = async (i: number, file: File) => {
+  const parsePdf = async (course: Course, file: File) => {
     setBusy(true);
     setStatus("Parsing " + file.name + "…");
     try {
@@ -86,8 +86,8 @@ export function AcademicTriage() {
       });
       const data: { text?: string; error?: string } = await res.json();
       if (!res.ok || typeof data.text !== "string") throw new Error(data.error);
-      update(i, { syllabus: data.text });
-      setStatus("Added syllabus text to " + courses[i].course + ".");
+      update(course.id, { syllabus: data.text });
+      setStatus("Added syllabus text to " + (course.course || "course") + ".");
     } catch (e) {
       setStatus(
         e instanceof Error && e.message ? e.message : "Could not parse PDF.",
@@ -206,7 +206,7 @@ export function AcademicTriage() {
         </section>
       </div>
 
-      {courses.map((c, i) => (
+      {courses.map((c) => (
         <section className="panel" key={c.id}>
           <div className="panel-heading">
             <div>
@@ -221,7 +221,7 @@ export function AcademicTriage() {
             </div>
             <button
               className="button"
-              onClick={() => setCourses((a) => a.filter((_, j) => j !== i))}
+              onClick={() => setCourses((a) => a.filter((x) => x.id !== c.id))}
             >
               Remove
             </button>
@@ -235,7 +235,7 @@ export function AcademicTriage() {
                 id={`course-name-${c.id}`}
                 className="text-input"
                 value={c.course}
-                onChange={(e) => update(i, { course: e.target.value })}
+                onChange={(e) => update(c.id, { course: e.target.value })}
               />
             </div>
             <div>
@@ -246,7 +246,7 @@ export function AcademicTriage() {
                 id={`course-prof-${c.id}`}
                 className="text-input"
                 value={c.professor}
-                onChange={(e) => update(i, { professor: e.target.value })}
+                onChange={(e) => update(c.id, { professor: e.target.value })}
                 placeholder="Professor name"
               />
             </div>
@@ -260,7 +260,7 @@ export function AcademicTriage() {
             rows={6}
             maxLength={60000}
             value={c.syllabus}
-            onChange={(e) => update(i, { syllabus: e.target.value })}
+            onChange={(e) => update(c.id, { syllabus: e.target.value })}
             placeholder="Paste attendance, makeup, and late-work policies here."
           />
           <div className="support-actions">
@@ -271,7 +271,7 @@ export function AcademicTriage() {
                 accept="application/pdf"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) parsePdf(i, f);
+                  if (f) parsePdf(c, f);
                   e.currentTarget.value = "";
                 }}
               />

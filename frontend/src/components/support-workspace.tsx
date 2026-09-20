@@ -24,8 +24,15 @@ import { SYMPTOMS, type CheckIn } from "@/lib/support-data";
 import { AcademicTriage } from "./support/academic-triage";
 import { CheckIns } from "./support/check-ins";
 import { FoodSupport } from "./support/food-support";
-import { Forum } from "./support/forum";
+import {
+  FORUM_SEED,
+  Forum,
+  loadForumPosts,
+  storeForumPosts,
+  type Post,
+} from "./support/forum";
 import { LostVoice } from "./support/lost-voice";
+import { ThemeToggle } from "./theme-toggle";
 import "./support.css";
 
 type Tab = "home" | "food" | "academics" | "voice" | "tracking" | "forum";
@@ -73,6 +80,7 @@ const HEADINGS: Record<Tab, { crumb: string; title: string; lede: string }> = {
 };
 
 const STORAGE_KEY = "freshman-flu-checkins";
+const SESSION_KEY = "freshman-flu-student-session";
 
 function loadCheckIns(): CheckIn[] {
   try {
@@ -88,10 +96,14 @@ function loadCheckIns(): CheckIn[] {
 export function SupportWorkspace() {
   const [tab, setTab] = useState<Tab>("home");
   const [checkIns, setCheckIns] = useState<CheckIn[]>([]);
+  const [posts, setPosts] = useState<Post[]>(FORUM_SEED);
+  const [studentName, setStudentName] = useState<string | null>(null);
   const main = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setCheckIns(loadCheckIns());
+    setPosts(loadForumPosts());
+    setStudentName(localStorage.getItem(SESSION_KEY));
   }, []);
 
   const navigate = (next: Tab) => {
@@ -103,6 +115,10 @@ export function SupportWorkspace() {
     setCheckIns(next);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   };
+  const savePosts = (next: Post[]) => {
+    setPosts(next);
+    storeForumPosts(next);
+  };
 
   const todayKey = new Date().toLocaleDateString("en-CA");
   const todaySymptoms = [
@@ -111,6 +127,13 @@ export function SupportWorkspace() {
     ),
   ];
   const heading = HEADINGS[tab];
+
+  if (studentName === null) {
+    return <StudentSignIn onSignIn={(name) => {
+      localStorage.setItem(SESSION_KEY, name);
+      setStudentName(name);
+    }} />;
+  }
 
   return (
     <div className="app-shell support">
@@ -141,10 +164,14 @@ export function SupportWorkspace() {
             <Activity size={16} />
             <span>Campus simulation</span>
           </Link>
-          <Link className="button quiet" href="/" aria-label="Sign out of student workspace">
+          <button className="button quiet" onClick={() => {
+            localStorage.removeItem(SESSION_KEY);
+            setStudentName(null);
+          }} aria-label="Sign out of student workspace">
             <LogOut size={16} />
             <span>Sign out</span>
-          </Link>
+          </button>
+          <ThemeToggle />
           <a
             className="github-link"
             href="https://github.com/prithwiraj10/HackMIT"
@@ -210,16 +237,21 @@ export function SupportWorkspace() {
         {tab === "home" && (
           <Overview onNavigate={navigate} hasCheckIn={checkIns.length > 0} />
         )}
-        {tab === "food" && <FoodSupport todaySymptoms={todaySymptoms} />}
+        {tab === "food" && <FoodSupport todaySymptoms={todaySymptoms} studentName={studentName} />}
         {tab === "academics" && <AcademicTriage />}
         {tab === "voice" && <LostVoice />}
         {tab === "tracking" && (
           <CheckIns checkIns={checkIns} onSave={saveCheckIn} />
         )}
-        {tab === "forum" && <Forum />}
+        {tab === "forum" && <Forum posts={posts} onChange={savePosts} />}
       </main>
     </div>
   );
+}
+
+function StudentSignIn({ onSignIn }: { onSignIn: (name: string) => void }) {
+  const [name, setName] = useState("");
+  return <main className="app-shell support"><section className="panel sign-in-panel"><span className="eyebrow">STUDENT WORKSPACE</span><h1>Sign in for your support space</h1><p>Use a name to keep demo food-run requests, credits, and check-ins separate from another student.</p><label className="field-label" htmlFor="student-name">Your name</label><input id="student-name" className="text-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Kira" /><button className="button primary" disabled={!name.trim()} onClick={() => onSignIn(name.trim().slice(0, 60))}>Sign in</button><p className="support-hint">Demo only — no password or real payment information.</p></section></main>;
 }
 
 function Overview({

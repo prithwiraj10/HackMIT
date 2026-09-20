@@ -17,21 +17,21 @@ import {
   Layers3,
   Map,
   MapPin,
-  Moon,
   Pause,
   Play,
   RotateCcw,
   Search,
   SlidersHorizontal,
   Sparkles,
-  Sun,
   Users,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { CampusMap } from "./campus-map";
 import { TrendChart } from "./trend-chart";
 import { LocationDetail } from "./location-detail";
 import { ChatPanel } from "./chat-panel";
+import { ThemeToggle } from "./theme-toggle";
 import {
   BASELINE,
   BUILDINGS,
@@ -62,7 +62,6 @@ export function Dashboard() {
   const [selected, setSelected] = useState(BUILDINGS[0].id);
   const [query, setQuery] = useState("");
   const [showLocationInsight, setShowLocationInsight] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const [mapResetKey, setMapResetKey] = useState(0);
   const [comparison, setComparison] = useState<Scenario | null>(null);
   const [active, setActive] = useState("baseline");
@@ -102,19 +101,12 @@ export function Dashboard() {
       .includes(query.trim().toLowerCase()),
   );
   return (
-    <div className={darkMode ? "app-shell sim theme-dark" : "app-shell sim"}>
+    <div className="app-shell sim">
       <a className="skip-link" href="#main-content">
         Skip to content
       </a>
       <header className="app-header">
-        <a
-          className="brand"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            navigate("simulation");
-          }}
-        >
+        <Link className="brand" href="/">
           <span className="brand-mark">
             <Activity size={22} />
           </span>
@@ -122,7 +114,7 @@ export function Dashboard() {
             freshman<span className="brand-light">flu</span>
             <small>CAMPUS SIMULATION LAB</small>
           </span>
-        </a>
+        </Link>
         <div className="header-context">
           <span className="divider" />
           <MapPin size={15} />
@@ -243,17 +235,7 @@ export function Dashboard() {
                 </select>
               </label>
             )}
-            <button
-              className="theme-toggle"
-              type="button"
-              aria-pressed={darkMode}
-              onClick={() => setDarkMode((enabled) => !enabled)}
-            >
-              <span className="theme-toggle-icon">
-                {darkMode ? <Sun size={15} /> : <Moon size={15} />}
-              </span>
-              <span>{darkMode ? "Light mode" : "Dark mode"}</span>
-            </button>
+            <ThemeToggle />
           </div>
         </div>
         <div className="status-message" role="status">

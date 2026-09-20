@@ -1,7 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import { ArrowRight, Activity } from "lucide-react";
+import { LandingHero } from "@/components/landing-hero";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "./landing.css";
 
 const display = Fraunces({
@@ -15,57 +16,22 @@ export default function Page() {
   return (
     <div className={`landing ${display.variable}`}>
       <nav className="landing-nav" aria-label="Choose an audience">
-        <span className="landing-brand">
+        <Link className="landing-brand" href="/" aria-label="Freshman Flu home">
           <span className="landing-mark">
             <Activity size={19} strokeWidth={2.6} />
           </span>
           <span>
             Freshman<em>Flu</em>
           </span>
-        </span>
+        </Link>
         <div className="landing-switch">
           <a href="#students">Students</a>
           <a href="#admin">Admin</a>
+          <ThemeToggle className="landing-theme" />
         </div>
       </nav>
 
-      <header className="landing-hero">
-        <div className="hero-copy">
-          <h1>Outrun the outbreak</h1>
-          <p>
-            Twenty-one days of simulated flu across 32 MIT buildings and 8,515
-            students, so you can see it coming before it reaches you.
-          </p>
-          <div className="hero-actions">
-            <a className="solid" href="#students">
-              I&apos;m a student <ArrowRight size={17} />
-            </a>
-            <a className="ghost" href="#admin">
-              I&apos;m an administrator
-            </a>
-          </div>
-        </div>
-
-        <div className="hero-cards">
-          <figure className="card-back">
-            <Image
-              src="/landing/students.jpg"
-              alt="Students crossing campus between classes"
-              width={1024}
-              height={1024}
-            />
-          </figure>
-          <figure className="card-front">
-            <Image
-              src="/landing/hero.jpg"
-              alt="MIT campus and the Charles River at sunset"
-              width={1536}
-              height={1024}
-              priority
-            />
-          </figure>
-        </div>
-      </header>
+      <LandingHero />
 
       <section className="landing-section students" id="students">
         <div className="section-copy">

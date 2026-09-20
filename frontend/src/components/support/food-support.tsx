@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, ShoppingBag, Trash2 } from "lucide-react";
 import {
   FOOD_AREAS,
@@ -10,18 +10,31 @@ import {
   type FoodArea,
 } from "@/lib/support-data";
 
-type Request = { id: number; title: string; spot: string; amount: number };
+type Request = { id: number; title: string; spot: string; amount: number; requester: string; claimedBy?: string };
+const BOARD_KEY = "freshman-flu-food-board";
+const CREDITS_KEY = "freshman-flu-student-credits";
 
-export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
+export function FoodSupport({ todaySymptoms, studentName }: { todaySymptoms: string[]; studentName: string }) {
   const [symptom, setSymptom] = useState<string>("Sore throat");
   const [area, setArea] = useState<FoodArea>("MIT campus");
   const [guidance, setGuidance] = useState("");
   const [requests, setRequests] = useState<Request[]>([]);
+  const [credits, setCredits] = useState(100);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("Soup + tea pickup");
   const [spot, setSpot] = useState(FOOD_SPOTS["MIT campus"][0]);
   const [amount, setAmount] = useState("12");
   const [formError, setFormError] = useState("");
+
+  useEffect(() => {
+    const board = JSON.parse(localStorage.getItem(BOARD_KEY) ?? "[]");
+    const balances = JSON.parse(localStorage.getItem(CREDITS_KEY) ?? "{}");
+    if (!(studentName in balances)) balances[studentName] = 100;
+    setRequests(Array.isArray(board) ? board : []);
+    setCredits(balances[studentName]);
+    localStorage.setItem(CREDITS_KEY, JSON.stringify(balances));
+  }, [studentName]);
+  const saveBoard = (next: Request[]) => { setRequests(next); localStorage.setItem(BOARD_KEY, JSON.stringify(next)); };
 
   const recommend = () =>
     setGuidance(foodGuidance(symptom === "today" ? todaySymptoms : [symptom]));
@@ -34,7 +47,7 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
             <h2>What sounds manageable?</h2>
             <p>Pick how you feel and where you can get to.</p>
           </div>
-          <strong className="support-credits">100 credits</strong>
+          <strong className="support-credits">{credits} credits</strong>
         </div>
         <label className="field-label" htmlFor="food-area">
           Where should we look for food?
@@ -128,9 +141,9 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
                 setFormError("Offer between 1 and 100 credits.");
                 return;
               }
-              setRequests((a) => [
-                ...a,
-                { id: Date.now(), title, spot, amount: credits },
+              saveBoard([
+                ...requests,
+                { id: Date.now(), title, spot, amount: credits, requester: studentName },
               ]);
               setFormError("");
               setShowForm(false);
@@ -174,17 +187,17 @@ export function FoodSupport({ todaySymptoms }: { todaySymptoms: string[] }) {
                 <div>
                   <strong>{r.title}</strong>
                   <small>
-                    {r.spot} · {r.amount} mock credits · awaiting volunteer
+                    {r.spot} · {r.amount} mock credits · requested by {r.requester}{r.claimedBy ? " · claimed by " + r.claimedBy : ""}
                   </small>
                 </div>
-                <button
-                  className="button"
-                  onClick={() =>
-                    setRequests((a) => a.filter((x) => x.id !== r.id))
-                  }
-                >
-                  <Trash2 size={14} /> Remove
-                </button>
+                {r.requester === studentName ? <button className="button" onClick={() => saveBoard(requests.filter((x) => x.id !== r.id))}><Trash2 size={14} /> Remove</button> : !r.claimedBy ? <button className="button primary" onClick={() => {
+                  const balances = JSON.parse(localStorage.getItem(CREDITS_KEY) ?? "{}");
+                  balances[r.requester] = (balances[r.requester] ?? 100) - r.amount;
+                  balances[studentName] = (balances[studentName] ?? 100) + r.amount;
+                  localStorage.setItem(CREDITS_KEY, JSON.stringify(balances));
+                  setCredits(balances[studentName]);
+                  saveBoard(requests.map((x) => x.id === r.id ? { ...x, claimedBy: studentName } : x));
+                }}>Claim · +{r.amount}</button> : null}
               </li>
             ))}
           </ul>
