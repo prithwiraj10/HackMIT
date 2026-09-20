@@ -52,6 +52,23 @@ function loadGoogleLibraries(apiKey: string) {
   return googleLibraries;
 }
 
+const SOFTWARE_RENDERERS = /swiftshader|llvmpipe|softpipe|software/i;
+
+function hardwareWebGLAvailable() {
+  const gl = document.createElement("canvas").getContext("webgl2");
+  if (!gl) return false;
+  const info = gl.getExtension("WEBGL_debug_renderer_info");
+  const renderer = info
+    ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))
+    : String(gl.getParameter(gl.RENDERER));
+  return !SOFTWARE_RENDERERS.test(renderer);
+}
+
+const GOOGLE_LOAD_ERROR =
+  "Google 3D Maps could not load. Check the API key, billing, referrer restrictions, and that the Maps JavaScript API and Map Tiles API are enabled.";
+const GOOGLE_GPU_ERROR =
+  "Google 3D Maps needs hardware-accelerated WebGL, which this browser does not provide. Enable hardware acceleration or open the site on a device with a GPU.";
+
 function declutter(points: { id: string; x: number; y: number }[]) {
   for (let pass = 0; pass < 60; pass++) {
     let moved = false;
@@ -342,6 +359,10 @@ function GoogleCampusMap({
     let cancelled = false;
     const mapHost = host.current;
     if (!mapHost) return;
+    if (!hardwareWebGLAvailable()) {
+      setError(GOOGLE_GPU_ERROR);
+      return;
+    }
 
     loadGoogleLibraries(apiKey)
       .then(({ maps3d, PinElement }) => {
@@ -369,10 +390,7 @@ function GoogleCampusMap({
           flyToCampus(map);
         };
         const finishFlight = () => setEnteredCampus(true);
-        const reportMapError = () =>
-          setError(
-            "Google 3D Maps could not load. Check the API key, billing, referrer restrictions, and Maps JavaScript API access.",
-          );
+        const reportMapError = () => setError(GOOGLE_LOAD_ERROR);
         map.addEventListener("gmp-steadychange", startFlight);
         map.addEventListener("gmp-animationend", finishFlight, { once: true });
         map.addEventListener("gmp-error", reportMapError);
@@ -380,10 +398,7 @@ function GoogleCampusMap({
       })
       .catch((reason: unknown) => {
         console.error("Could not initialize Google 3D Maps", reason);
-        if (!cancelled)
-          setError(
-            "Google 3D Maps could not load. Check the API key, billing, referrer restrictions, and Maps JavaScript API access.",
-          );
+        if (!cancelled) setError(GOOGLE_LOAD_ERROR);
       });
 
     return () => {
